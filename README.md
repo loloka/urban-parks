@@ -2,174 +2,86 @@
 
 # 🌳 Urban Parks
 
-### Международная радиолюбительская программа для работы из городских парков
+Международная радиолюбительская программа для работы из городских парков
 
-[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
-[![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?style=for-the-badge&logo=php)](https://php.net)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.x-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
-[![Filament](https://img.shields.io/badge/Filament-3.x-FDBA74?style=for-the-badge)](https://filamentphp.com)
-
-[🌐 Демо](#) · [📖 Документация](#документация) · [🐛 Баги](https://github.com/loloka/urban-parks/issues) · [💡 Идеи](https://github.com/loloka/urban-parks/issues)
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square)](https://laravel.com) [![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?style=flat-square)](https://php.net) [![Tailwind](https://img.shields.io/badge/Tailwind-4.x-38B2AC?style=flat-square)](https://tailwindcss.com)
 
 </div>
 
----
+## О проекте
 
-## 📖 О проекте
+Urban Parks — платформа для радиолюбителей, активирующих городские парки (вдохновлена POTA и WWFF).
 
-**Urban Parks** — веб-платформа для радиолюбителей, активирующих городские парки. Вдохновлён POTA и WWFF, но для городских парков.
+**Возможности:** Интерактивная карта · 18+ парков России · Логирование активаций · Фильтры и поиск · Админ-панель · Статистика
 
-### ✨ Возможности
+## Технологии
 
-- 🗺️ Интерактивная карта с кластеризацией (Leaflet.js)
-- 📍 18+ парков России
-- 📡 Логирование активаций
-- 🎯 Фильтры по городам/регионам
-- 🔍 Быстрый поиск
-- 👨‍💼 Админ-панель Filament 3
-- 📊 Статистика в реальном времени
-- 🌍 Международная поддержка
-- 📱 Адаптивный дизайн
+Laravel 12 · PHP 8.4 · MySQL 8 · Tailwind 4 · Alpine.js · Vite · Filament 3 · Leaflet.js · OpenStreetMap
 
----
-
-## 🛠️ Технологии
-
-- Laravel 12.x
-- PHP 8.4+
-- MySQL 8.0+
-- Tailwind CSS 4.x
-- Alpine.js 3.x
-- Vite 7.x
-- Filament 3.2+
-- Leaflet.js 1.9+
-- OpenStreetMap
-
----
-
-## 🚀 Установка
+## Установка
 
 ```bash
 git clone https://github.com/loloka/urban-parks.git
 cd urban-parks
-composer install
-npm install
+composer install && npm install
 cp .env.example .env
 php artisan key:generate
-mysql -u root -e "CREATE DATABASE urban_parks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -e "CREATE DATABASE urban_parks;"
 php artisan migrate --seed
 php artisan make:filament-user
-php artisan serve
-npm run dev
-```
+php artisan serve & npm run dev
 
-Готово! Сайт: http://localhost:8000 • Админка: http://localhost:8000/admin
+Сайт: http://localhost:8000 · Админка: http://localhost:8000/admin
 
-📁 Структура проекта
+Структура
+
 urban-parks/
-├── app/
-│ ├── Filament/
-│ │ ├── Resources/
-│ │ │ ├── ParkResource.php
-│ │ │ └── ActivationResource.php
-│ │ └── Widgets/
-│ │ └── StatsOverview.php
-│ ├── Http/Controllers/
-│ │ ├── ParkController.php
-│ │ └── ApiController.php
-│ ├── Models/
-│ │ ├── Park.php
-│ │ └── Activation.php
-│ └── Observers/
-│ └── ActivationObserver.php
-├── database/
-│ ├── migrations/
-│ │ ├── 2025_01_create_parks_table.php
-│ │ └── 2025_01_create_activations_table.php
-│ └── seeders/
-│ ├── ParkSeeder.php
-│ └── ActivationSeeder.php
-├── resources/
-│ ├── css/
-│ │ └── app.css
-│ ├── js/
-│ │ └── app.js
-│ └── views/
-│ ├── welcome.blade.php
-│ └── parks/
-│ └── show.blade.php
-├── routes/
-│ ├── web.php
-│ └── api.php
-├── public/
-│ └── build/
-├── .env.example
-├── composer.json
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-└── README.md
+├── app/Filament/          # Админ-панель (Resources, Widgets)
+├── app/Http/Controllers/  # ParkController, ApiController
+├── app/Models/            # Park, Activation
+├── database/migrations/   # Миграции БД
+├── database/seeders/      # Тестовые данные (18 парков)
+├── resources/views/       # Blade шаблоны
+└── routes/                # web.php, api.php
 
-Сайт: http://localhost:8000
-Админка: http://localhost:8000/admin
-📚 API
-GET /api/parks
-Получить все парки (фильтры: city, region, search)
-
+API
+GET /api/parks (параметры: city, region, search)
 GET /api/cities
-Список городов с количеством парков
-
 GET /api/regions
-Список регионов с количеством парков
 
-🗺️ Парки
-Новосибирск (6) 🏆
-UP-0001 Центральный парк | UP-0002 Заельцовский | UP-0003 Березовая роща | UP-0004 Сосновый бор | UP-0005 Городское начало | UP-0006 Нарымский сквер
 
-Москва (4)
-UP-0007 Парк Горького | UP-0008 Сокольники | UP-0009 Коломенское | UP-0010 Парк Победы
+Парки
+Новосибирск (6): UP-0001 Центральный · UP-0002 Заельцовский · UP-0003 Березовая роща · UP-0004 Сосновый бор · UP-0005 Городское начало · UP-0006 Нарымский сквер
 
-Санкт-Петербург (4)
-UP-0011 Летний сад | UP-0012 Александровский сад | UP-0013 Таврический сад | UP-0017 Парк 300-летия
+Москва (4): UP-0007 Горького · UP-0008 Сокольники · UP-0009 Коломенское · UP-0010 Победы
 
-Другие (4)
-UP-0014 ЦПКиО Белоусова (Тула) | UP-0015 Парк Маяковского (Екатеринбург) | UP-0016 Парк Горького (Казань) | UP-0018 Ботанический сад (Владивосток)
+СПб (4): UP-0011 Летний сад · UP-0012 Александровский · UP-0013 Таврический · UP-0017 Парк 300-летия
 
-🎯 Roadmap
-v1.0 (Текущая) ✅
+Другие (4): UP-0014 Белоусова (Тула) · UP-0015 Маяковского (Екб) · UP-0016 Горького (Казань) · UP-0018 Ботанический (Влд)
 
-Карта, парки, админка, API
-v1.1 (В разработке) 🚧
+Roadmap
+v1.0 (текущая): Карта · Парки · Админка · API
 
-Авторизация
-Публичная форма активаций
-Личный кабинет
-Дипломы
-ADIF экспорт
-v2.0 (План) 📅
+v1.1 (в работе): Авторизация · Публичная форма · Личный кабинет · Дипломы · ADIF экспорт
 
-Telegram бот
-QRZ интеграция
-Другие страны
-Мобильное приложение
-Ham2K API
-🤝 Участие
-🐛 Баг? → Issue
-💡 Идея? → Discussions
-🌳 Добавь парки → Pull Request
-⭐ Поставь звезду!
-📄 Лицензия
-MIT License. См. LICENSE
+v2.0 (план): Telegram бот · QRZ интеграция · Другие страны · Мобильное приложение · Ham2K API
 
-👨‍💻 Автор
-R9OGL & UA9OTW
+Участие
+🐛 Баг? Issue · 💡 Идея? Discussions · 🌳 Парки? Pull Request · ⭐ Звезда!
 
-Благодарности: POTA, WWFF, OpenStreetMap, Laragon
+Лицензия
+MIT License
 
-📞 Контакты
-📧 info@urbanparks.ru
-📱 Telegram: @urbanparks
-🌐 VK: vk.com/urbanparks
+Авторы
+R9OGL & UA9OTW @loloka
+
+Благодарности: POTA · WWFF · OpenStreetMap · Laragon · Laravel
+
+Контакты
+📧 info@urbanparks.ru · 📱 @urbanparks · 🌐 vk.com/urbanparks
 
 73! Приятных QSO из парков! 📡🌳
+
 Made with ❤️ by ham radio operators
+
+```
