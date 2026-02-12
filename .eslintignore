@@ -1,0 +1,8 @@
+/vendor
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage
+*.config.js
+vite.config.js
