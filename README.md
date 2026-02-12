@@ -63,7 +63,52 @@ php artisan serve
 npm run dev
 ```
 
-Готово!
+Готово! Сайт: http://localhost:8000 • Админка: http://localhost:8000/admin
+
+📁 Структура проекта
+urban-parks/
+├── app/
+│ ├── Filament/
+│ │ ├── Resources/
+│ │ │ ├── ParkResource.php
+│ │ │ └── ActivationResource.php
+│ │ └── Widgets/
+│ │ └── StatsOverview.php
+│ ├── Http/Controllers/
+│ │ ├── ParkController.php
+│ │ └── ApiController.php
+│ ├── Models/
+│ │ ├── Park.php
+│ │ └── Activation.php
+│ └── Observers/
+│ └── ActivationObserver.php
+├── database/
+│ ├── migrations/
+│ │ ├── 2025_01_create_parks_table.php
+│ │ └── 2025_01_create_activations_table.php
+│ └── seeders/
+│ ├── ParkSeeder.php
+│ └── ActivationSeeder.php
+├── resources/
+│ ├── css/
+│ │ └── app.css
+│ ├── js/
+│ │ └── app.js
+│ └── views/
+│ ├── welcome.blade.php
+│ └── parks/
+│ └── show.blade.php
+├── routes/
+│ ├── web.php
+│ └── api.php
+├── public/
+│ └── build/
+├── .env.example
+├── composer.json
+├── package.json
+├── vite.config.js
+├── tailwind.config.js
+└── README.md
 
 Сайт: http://localhost:8000
 Админка: http://localhost:8000/admin
