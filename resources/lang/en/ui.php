@@ -1,0 +1,136 @@
+<?php
+
+return [
+    // Navigation
+    'nav' => [
+        'map' => 'Map',
+        'parks' => 'Parks',
+        'top' => 'Top',
+        'add_activation' => 'Add Activation',
+        'diplomas' => 'Awards',
+    ],
+
+    // Hero section
+    'hero' => [
+        'title' => 'Activate Urban Parks!',
+        'subtitle' => 'International ham radio program for operating from city parks',
+        'stats' => [
+            'parks' => 'Parks',
+            'activations' => 'Activations',
+            'cities' => 'Cities',
+            'regions' => 'Regions',
+        ],
+        'featured_city' => 'Program capital: Novosibirsk (:count parks)',
+        'latest_activation' => 'Latest activation:',
+    ],
+
+    // Map
+    'map' => [
+        'title' => 'Parks Map',
+        'filter_city' => 'All cities',
+        'filter_region' => 'All regions',
+        'search_placeholder' => 'Search park...',
+        'visible_parks' => 'parks on map',
+        'reset_filters' => 'Reset filters',
+    ],
+
+    // Top activators
+    'top' => [
+        'title' => 'Top Activators',
+        'subtitle' => 'Urban Parks Program Leaders',
+        'rank' => '#',
+        'callsign' => 'Callsign',
+        'parks' => 'Parks',
+        'activations' => 'Activations',
+        'qso' => 'QSO',
+        'no_activators' => 'No activators yet',
+        'be_first' => 'Be the first!',
+        'view_all' => 'View all activators',
+    ],
+
+    // Parks
+    'parks' => [
+        'title' => 'Recent Parks',
+        'latest_activator' => 'Latest:',
+        'not_activated' => 'Not activated yet',
+        'activations_count' => 'Activations',
+        'more_details' => 'More details',
+        'not_found' => 'Parks not found',
+        'try_filters' => 'Try changing filters',
+        'loading' => 'Loading parks...',
+    ],
+
+    // Park page
+    'park' => [
+        'area' => 'Area',
+        'location' => 'Location',
+        'activations' => 'Activations',
+        'no_activations' => 'No activations yet',
+        'be_first_activator' => 'Be the first activator of this park!',
+        'add_activation' => 'Add Activation',
+        'export_adif' => 'Download ADIF',
+        'qso_count' => 'QSO',
+        'notes' => 'Notes',
+    ],
+
+    // Features
+    'features' => [
+        'title' => 'Why Urban Parks?',
+        'accessibility' => [
+            'title' => 'Accessibility',
+            'text' => 'City parks are available year-round and close to home',
+        ],
+        'diplomas' => [
+            'title' => 'Awards',
+            'text' => 'Earn awards for park activations and contacts with activators',
+        ],
+        'community' => [
+            'title' => 'Community',
+            'text' => 'Meet like-minded people and participate in mass activations',
+        ],
+    ],
+
+    // Footer
+    'footer' => [
+        'about' => 'About',
+        'rules' => 'Rules',
+        'api' => 'API',
+        'contacts' => 'Contacts',
+        'copyright' => 'Made with ❤️ by hams for hams',
+    ],
+
+    // Common
+    'loading' => 'Loading...',
+    'error' => 'Data loading error',
+    // Park page (добавляем недостающие)
+    'park' => [
+        'area' => 'Area',
+        'location' => 'Location',
+        'activations' => 'Activations',
+        'no_activations' => 'No activations yet',
+        'be_first_activator' => 'Be the first activator of this park!',
+        'add_activation' => 'Add Activation',
+        'export_adif' => 'Download ADIF',
+        'qso_count' => 'QSO',
+        'notes' => 'Notes',
+    ],
+
+    // Common phrases (добавляем)
+    'description' => 'Description',
+    'actions' => 'Actions',
+    'statistics' => 'Statistics',
+    'activation_rules' => 'Activation Rules',
+    'latitude' => 'Latitude',
+    'longitude' => 'Longitude',
+    'active' => 'Active',
+    'inactive' => 'Inactive',
+    'total_activations' => 'Total activations',
+    'unique_callsigns' => 'Unique callsigns',
+    'total_qso' => 'Total QSO',
+    'minimum_10_qso' => 'Minimum 10 QSO for activation',
+    'work_on_amateur_bands' => 'Work on amateur bands',
+    'respect_park_visitors' => 'Respect park visitors',
+    'portable_equipment' => 'Portable equipment',
+    'home' => 'Home',
+    'navigation' => 'Navigation',
+];

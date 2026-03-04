@@ -34,9 +34,9 @@ class ParkResource extends Resource
                             ->label('Референс')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->placeholder('UP-0001')
+                            ->placeholder('UP-RU-NSK-0001')
                             ->maxLength(255)
-                            ->helperText('Формат: UP-0001'),
+                            ->helperText('Формат: UP-RU-NSK-0001'),
 
                         Forms\Components\TextInput::make('name')
                             ->label('Название')

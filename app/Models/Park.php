@@ -9,15 +9,18 @@ class Park extends Model
 {
     protected $fillable = [
         'reference',
+        'country_code',
+        'region_code',
         'name',
+        'name_en',
+        'description',
+        'description_en',
         'city',
         'region',
         'latitude',
         'longitude',
-        'description',
         'area',
         'status',
-        'activation_count'
     ];
 
     protected $casts = [
@@ -25,6 +28,36 @@ class Park extends Model
         'longitude' => 'decimal:7',
         'activation_count' => 'integer',
     ];
+
+    /**
+     * Boot модели - автогенерация reference
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($park) {
+            if (empty($park->reference)) {
+                // Формат: UP-RU-NSK-0001
+                $countryCode = $park->country_code ?? 'RU';
+                $regionCode = $park->region_code ?? 'XXX';
+
+                // Находим последний номер в регионе
+                $lastPark = Park::where('country_code', $countryCode)
+                    ->where('region_code', $regionCode)
+                    ->orderBy('reference', 'desc')
+                    ->first();
+
+                if ($lastPark && preg_match('/UP-' . $countryCode . '-' . $regionCode . '-(\d+)/', $lastPark->reference, $matches)) {
+                    $nextNumber = intval($matches[1]) + 1;
+                } else {
+                    $nextNumber = 1;
+                }
+
+                $park->reference = sprintf('UP-%s-%s-%04d', $countryCode, $regionCode, $nextNumber);
+            }
+        });
+    }
 
     /**
      * Активации парка
@@ -40,6 +73,7 @@ class Park extends Model
     public function recentActivations($limit = 5)
     {
         return $this->activations()
+            ->where('status', 'approved')
             ->orderBy('activation_date', 'desc')
             ->limit($limit)
             ->get();
@@ -51,6 +85,7 @@ class Park extends Model
     public function uniqueActivators()
     {
         return $this->activations()
+            ->where('status', 'approved')
             ->distinct()
             ->count('callsign');
     }
@@ -60,7 +95,9 @@ class Park extends Model
      */
     public function totalQsoCount()
     {
-        return $this->activations()->sum('qso_count');
+        return $this->activations()
+            ->where('status', 'approved')
+            ->sum('qso_count');
     }
 
     /**
@@ -85,5 +122,35 @@ class Park extends Model
     public function scopeInRegion($query, $region)
     {
         return $query->where('region', $region);
+    }
+
+    /**
+     * Scope для поиска по стране
+     */
+    public function scopeInCountry($query, $countryCode)
+    {
+        return $query->where('country_code', $countryCode);
+    }
+
+    /**
+     * Получить полное название парка (с учётом языка)
+     */
+    public function getLocalizedName($locale = 'ru')
+    {
+        if ($locale === 'en' && !empty($this->name_en)) {
+            return $this->name_en;
+        }
+        return $this->name;
+    }
+
+    /**
+     * Получить описание парка (с учётом языка)
+     */
+    public function getLocalizedDescription($locale = 'ru')
+    {
+        if ($locale === 'en' && !empty($this->description_en)) {
+            return $this->description_en;
+        }
+        return $this->description;
     }
 }
