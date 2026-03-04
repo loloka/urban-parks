@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Park;
+use App\Models\Activation;
 use Illuminate\Http\Request;
 
 class ParkController extends Controller
@@ -13,15 +14,36 @@ class ParkController extends Controller
     public function index()
     {
         $stats = [
-            'total_parks' => Park::active()->count(),
-            'total_activations' => Park::sum('activation_count'),
-            'cities' => Park::distinct()->count('city'),
-            'regions' => Park::distinct()->count('region'),
+            'total_parks' => Park::count(),
+            'total_activations' => Activation::where('status', 'approved')->count(),
+            'cities' => Park::distinct('city')->count('city'),
+            'regions' => Park::distinct('region')->count('region'),
         ];
 
-        return view('welcome', compact('stats'));
+        // Последняя активация
+        $latestActivation = Activation::with('park')
+            ->where('status', 'approved')
+            ->latest('activation_date')
+            ->first();
+
+        // Топ активаторов (по количеству парков)
+        $topActivators = Activation::where('status', 'approved')
+            ->select('callsign')
+            ->selectRaw('COUNT(DISTINCT park_id) as parks_count')
+            ->selectRaw('SUM(qso_count) as total_qso')
+            ->selectRaw('COUNT(*) as activations_count')
+            ->groupBy('callsign')
+            ->orderByDesc('parks_count')
+            ->orderByDesc('total_qso')
+            ->limit(10)
+            ->get();
+
+        return view('welcome', compact('stats', 'latestActivation', 'topActivators'));
     }
 
+    /**
+     * API: Получить все парки
+     */
     /**
      * API: Получить все парки
      */
@@ -50,9 +72,38 @@ class ParkController extends Controller
         }
 
         $parks = $query
-            ->select('id', 'reference', 'name', 'city', 'region', 'latitude', 'longitude', 'description', 'area', 'activation_count')
+            ->with(['activations' => function ($q) {
+                $q->where('status', 'approved')
+                    ->latest('activation_date')
+                    ->limit(1);
+            }])
+            ->withCount(['activations' => function ($q) {
+                $q->where('status', 'approved');
+            }])
+            ->select('id', 'reference', 'name', 'city', 'region', 'latitude', 'longitude', 'description', 'area')
             ->orderBy('reference')
-            ->get();
+            ->get()
+            ->map(function ($park) {
+                $latestActivation = $park->activations->first();
+                return [
+                    'id' => $park->id,
+                    'reference' => $park->reference,
+                    'name' => $park->name,
+                    'city' => $park->city,
+                    'region' => $park->region,
+                    'latitude' => $park->latitude,
+                    'longitude' => $park->longitude,
+                    'description' => $park->description,
+                    'area' => $park->area,
+                    'activation_count' => $park->activations_count,
+                    'latest_activation' => $latestActivation ? [
+                        'callsign' => $latestActivation->callsign,
+                        'date' => $latestActivation->activation_date->format('Y-m-d'),
+                        'date_formatted' => $latestActivation->activation_date->format('d.m.Y'),
+                        'date_human' => $latestActivation->activation_date->diffForHumans(),
+                    ] : null,
+                ];
+            });
 
         return response()->json($parks);
     }
@@ -62,8 +113,11 @@ class ParkController extends Controller
      */
     public function show(Park $park)
     {
+        // Загружаем только одобренные активации
         $park->load(['activations' => function ($query) {
-            $query->orderBy('activation_date', 'desc')->limit(10);
+            $query->where('status', 'approved')
+                ->latest('activation_date')
+                ->limit(10);
         }]);
 
         return view('parks.show', compact('park'));
@@ -95,5 +149,47 @@ class ParkController extends Controller
             ->get();
 
         return response()->json($regions);
+    }
+
+    /**
+     * Экспорт активаций парка в ADIF
+     */
+    public function exportAdif(Park $park)
+    {
+        // Загружаем только одобренные активации
+        $activations = $park->activations()
+            ->where('status', 'approved')
+            ->orderBy('activation_date', 'desc')
+            ->get();
+
+        // Формируем ADIF содержимое
+        $adif = "ADIF Export from Urban Parks\n";
+        $adif .= "<PROGRAMID:11>Urban Parks\n";
+        $adif .= "<ADIF_VER:5>3.1.4\n";
+        $adif .= "<EOH>\n\n";
+
+        foreach ($activations as $activation) {
+            $adif .= "<STATION_CALLSIGN:" . strlen($activation->callsign) . ">" . $activation->callsign . "\n";
+            $adif .= "<QSO_DATE:8>" . $activation->activation_date->format('Ymd') . "\n";
+            $adif .= "<TIME_ON:4>1200\n"; // Примерное время
+            $adif .= "<BAND:3>20M\n"; // Примерный диапазон
+            $adif .= "<MODE:3>SSB\n"; // Примерный вид
+            $adif .= "<MY_SIG:10>URBAN_PARK\n";
+            $adif .= "<MY_SIG_INFO:" . strlen($park->reference) . ">" . $park->reference . "\n";
+            $adif .= "<COMMENT:" . strlen($park->name) . ">" . $park->name . "\n";
+
+            if ($activation->notes) {
+                $adif .= "<NOTES:" . strlen($activation->notes) . ">" . $activation->notes . "\n";
+            }
+
+            $adif .= "<EOR>\n\n";
+        }
+
+        // Скачиваем файл
+        $filename = 'urban-parks-' . $park->reference . '-' . date('Y-m-d') . '.adi';
+
+        return response($adif)
+            ->header('Content-Type', 'text/plain')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 }

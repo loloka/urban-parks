@@ -12,13 +12,23 @@ class Activation extends Model
         'callsign',
         'activation_date',
         'qso_count',
-        'notes'
+        'notes',
+        'status',
+        'moderator_note'
     ];
 
     protected $casts = [
         'activation_date' => 'date',
         'qso_count' => 'integer',
     ];
+
+    /**
+     * Только одобренные активации
+     */
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
 
     /**
      * Парк активации

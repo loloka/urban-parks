@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Urban Parks - Международная программа активации городских парков</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 </head>
+
 <body class="bg-gray-50">
-    
+
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 py-4">
@@ -20,8 +22,10 @@
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 bg-[--color-primary-600] rounded-lg flex items-center justify-center">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </div>
                     <div>
@@ -32,7 +36,11 @@
                 <nav class="hidden md:flex space-x-6">
                     <a href="#map" class="text-gray-700 hover:text-[--color-primary-600] transition">Карта</a>
                     <a href="#parks" class="text-gray-700 hover:text-[--color-primary-600] transition">Парки</a>
-                    <a href="#" class="text-gray-700 hover:text-[--color-primary-600] transition">Активации</a>
+                    <a href="#top" class="text-gray-700 hover:text-[--color-primary-600] transition">🏆 Топ</a>
+                    <a href="{{ route('activations.create') }}"
+                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition">
+                        ➕ Добавить активацию
+                    </a>
                     <a href="#" class="text-gray-700 hover:text-[--color-primary-600] transition">Дипломы</a>
                 </nav>
             </div>
@@ -66,10 +74,38 @@
                     <div class="text-sm text-blue-200">Регионов</div>
                 </div>
             </div>
-            
+
             <!-- Featured City Banner -->
-            <div class="mt-8 inline-block bg-yellow-400 text-gray-900 px-6 py-3 rounded-full font-bold">
-                🏆 Столица программы: Новосибирск (6 парков)
+            <div class="mt-8 flex flex-col md:flex-row items-center justify-center gap-4">
+                <div class="inline-block bg-yellow-400 text-gray-900 px-6 py-3 rounded-full font-bold">
+                    🏆 Столица программы: Новосибирск (6 парков)
+                </div>
+
+                @if ($latestActivation)
+                    <div
+                        class="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-semibold">
+                        <span class="text-green-300">🔥 Последняя активация:</span>
+                        <a href="https://www.qrz.com/db/{{ $latestActivation->callsign }}" target="_blank"
+                            class="font-mono font-bold hover:underline">
+                            {{ $latestActivation->callsign }}
+                        </a>
+                        <span class="text-blue-200">→</span>
+                        <a href="/park/{{ $latestActivation->park->id }}" class="hover:underline">
+                            {{ $latestActivation->park->reference }}
+                        </a>
+                        <span
+                            class="text-xs text-blue-200">({{ $latestActivation->activation_date->diffForHumans() }})</span>
+                    </div>
+                @endif
+            </div>
+            <div class="mt-6">
+                <a href="{{ route('activations.create') }}"
+                    class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Добавить активацию
+                </a>
             </div>
         </div>
     </section>
@@ -81,23 +117,21 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                     <h3 class="text-2xl font-bold text-gray-900">🗺️ Карта парков</h3>
                     <div class="flex flex-wrap gap-2">
-                        <select id="city-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[--color-primary-600] focus:border-transparent">
+                        <select id="city-filter"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[--color-primary-600] focus:border-transparent">
                             <option value="">Все города</option>
                         </select>
-                        <select id="region-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[--color-primary-600] focus:border-transparent">
+                        <select id="region-filter"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[--color-primary-600] focus:border-transparent">
                             <option value="">Все регионы</option>
                         </select>
-                        <input 
-                            type="text" 
-                            id="search-input" 
-                            placeholder="🔍 Поиск парка..." 
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[--color-primary-600] focus:border-transparent"
-                        />
+                        <input type="text" id="search-input" placeholder="🔍 Поиск парка..."
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[--color-primary-600] focus:border-transparent" />
                     </div>
                 </div>
-                
+
                 <div id="map" class="rounded-xl"></div>
-                
+
                 <div class="mt-4 text-sm text-gray-600 flex items-center justify-between">
                     <div>
                         <span class="font-semibold" id="visible-parks-count">0</span> парков на карте
@@ -110,6 +144,106 @@
         </div>
     </section>
 
+    <!-- Top Activators -->
+    <section class="py-12 bg-white" id="top">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-8">
+                <h3 class="text-3xl font-bold text-gray-900 mb-2">🏆 Топ активаторов</h3>
+                <p class="text-gray-600">Лидеры программы Urban Parks</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold">#</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold">Позывной</th>
+                                <th class="px-6 py-4 text-center text-sm font-semibold">Парков</th>
+                                <th class="px-6 py-4 text-center text-sm font-semibold">Активаций</th>
+                                <th class="px-6 py-4 text-center text-sm font-semibold">QSO</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            @forelse($topActivators as $index => $activator)
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4">
+                                        @if ($index === 0)
+                                            <span class="text-2xl">🥇</span>
+                                        @elseif($index === 1)
+                                            <span class="text-2xl">🥈</span>
+                                        @elseif($index === 2)
+                                            <span class="text-2xl">🥉</span>
+                                        @else
+                                            <span class="text-gray-500 font-semibold">{{ $index + 1 }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <a href="https://www.qrz.com/db/{{ $activator->callsign }}" target="_blank"
+                                            class="font-mono font-bold text-lg text-blue-600 hover:text-blue-800 hover:underline">
+                                            {{ $activator->callsign }}
+                                        </a>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span
+                                            class="inline-flex items-center justify-center px-3 py-1 bg-green-100 text-green-800 rounded-full font-bold text-sm">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            </svg>
+                                            {{ $activator->parks_count }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span
+                                            class="inline-flex items-center justify-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-bold text-sm">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 10V3L4 14h7v7l9-11h-7" />
+                                            </svg>
+                                            {{ $activator->activations_count }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span
+                                            class="font-bold text-gray-900 text-lg">{{ number_format($activator->total_qso) }}</span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                        <p class="text-lg font-semibold">Пока нет активаторов</p>
+                                        <p class="text-sm mt-2">Будь первым! 🚀</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                @if ($topActivators->count() >= 10)
+                    <div class="text-center mt-6">
+                        <a href="#"
+                            class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold transition">
+                            Посмотреть всех активаторов
+                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </section>
+
     <!-- Parks List -->
     <section class="py-12 bg-gray-50" id="parks">
         <div class="container mx-auto px-4">
@@ -117,7 +251,9 @@
             <div id="parks-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Динамически загружается через JS -->
                 <div class="col-span-full text-center py-8">
-                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[--color-primary-600]"></div>
+                    <div
+                        class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[--color-primary-600]">
+                    </div>
                     <p class="mt-4 text-gray-600">Загрузка парков...</p>
                 </div>
             </div>
@@ -132,7 +268,8 @@
                 <div class="text-center p-6">
                     <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                         </svg>
                     </div>
                     <h4 class="text-xl font-bold mb-2">Доступность</h4>
@@ -140,8 +277,10 @@
                 </div>
                 <div class="text-center p-6">
                     <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                         </svg>
                     </div>
                     <h4 class="text-xl font-bold mb-2">Дипломы</h4>
@@ -149,8 +288,10 @@
                 </div>
                 <div class="text-center p-6">
                     <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     </div>
                     <h4 class="text-xl font-bold mb-2">Сообщество</h4>
@@ -166,7 +307,8 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
                 <div>
                     <h4 class="text-lg font-bold mb-4">Urban Parks</h4>
-                    <p class="text-gray-400">Международная радиолюбительская программа для работы из городских парков</p>
+                    <p class="text-gray-400">Международная радиолюбительская программа для работы из городских парков
+                    </p>
                 </div>
                 <div>
                     <h4 class="text-lg font-bold mb-4">Навигация</h4>
@@ -195,12 +337,12 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    
+
     <script>
         // Инициализация карты
         // Исправлено: убираем атрибуцию с флагом
         const map = L.map('map', {
-            attributionControl: false  // Отключаем стандартную атрибуцию
+            attributionControl: false // Отключаем стандартную атрибуцию
         }).setView([55.751244, 82.914517], 5);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -210,7 +352,7 @@
         // Добавляем свою нейтральную атрибуцию внизу справа
         L.control.attribution({
             position: 'bottomright',
-            prefix: false  // Убираем "Leaflet"
+            prefix: false // Убираем "Leaflet"
         }).addAttribution('© OpenStreetMap').addTo(map);
 
         // Кластеризация маркеров
@@ -236,9 +378,18 @@
             .then(response => response.json())
             .then(parks => {
                 allParks = parks;
-                filteredParks = parks;
-                updateMap(parks);
-                renderParksList(parks.slice(0, 6)); // Показываем первые 6
+
+                // Сортируем: сначала парки с последними активациями
+                const sortedParks = [...parks].sort((a, b) => {
+                    if (!a.latest_activation && !b.latest_activation) return 0;
+                    if (!a.latest_activation) return 1;
+                    if (!b.latest_activation) return -1;
+                    return new Date(b.latest_activation.date) - new Date(a.latest_activation.date);
+                });
+
+                filteredParks = sortedParks;
+                updateMap(sortedParks);
+                renderParksList(sortedParks.slice(0, 6)); // Показываем 6 последних активированных
             })
             .catch(error => {
                 console.error('Ошибка загрузки парков:', error);
@@ -278,9 +429,11 @@
         // Обновление карты
         function updateMap(parks) {
             markers.clearLayers();
-            
+
             parks.forEach(park => {
-                const marker = L.marker([park.latitude, park.longitude], { icon: customIcon })
+                const marker = L.marker([park.latitude, park.longitude], {
+                        icon: customIcon
+                    })
                     .bindPopup(`
                         <div class="p-2 min-w-[200px]">
                             <h4 class="font-bold text-lg mb-1">${park.name}</h4>
@@ -301,52 +454,65 @@
         // Рендер списка парков
         function renderParksList(parks) {
             const container = document.getElementById('parks-list');
-            
+
             if (parks.length === 0) {
                 container.innerHTML = `
-                    <div class="col-span-full text-center py-8 text-gray-500">
-                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <p class="text-lg font-semibold">Парки не найдены</p>
-                        <p class="text-sm mt-2">Попробуйте изменить фильтры</p>
-                    </div>
-                `;
+            <div class="col-span-full text-center py-8 text-gray-500">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-lg font-semibold">Парки не найдены</p>
+                <p class="text-sm mt-2">Попробуйте изменить фильтры</p>
+            </div>
+        `;
                 return;
             }
 
             container.innerHTML = parks.map(park => `
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition transform hover:-translate-y-1">
-                    <div class="flex items-start justify-between mb-3">
-                        <div>
-                            <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full font-mono">
-                                ${park.reference}
-                            </span>
-                        </div>
-                        <span class="text-xs text-gray-500 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                            ${park.activation_count}
-                        </span>
-                    </div>
-                    <h4 class="text-xl font-bold text-gray-900 mb-2">${park.name}</h4>
-                    <p class="text-sm text-gray-600 mb-1 flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                        </svg>
-                        ${park.city}, ${park.region}
-                    </p>
-                    ${park.area ? `<p class="text-xs text-gray-500 mb-3">📐 ${park.area}</p>` : ''}
-                    <p class="text-sm text-gray-700 mb-4 line-clamp-2">${park.description || 'Городской парк для активаций радиолюбителей'}</p>
-                    <a href="/park/${park.id}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold text-sm transition">
-                        Подробнее
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </a>
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition transform hover:-translate-y-1">
+            <div class="flex items-start justify-between mb-3">
+                <div>
+                    <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full font-mono">
+                        ${park.reference}
+                    </span>
                 </div>
-            `).join('');
+                <span class="text-xs text-gray-500 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    ${park.activation_count || 0}
+                </span>
+            </div>
+            <h4 class="text-xl font-bold text-gray-900 mb-2">${park.name}</h4>
+            <p class="text-sm text-gray-600 mb-1 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                </svg>
+                ${park.city}, ${park.region}
+            </p>
+            ${park.area ? `<p class="text-xs text-gray-500 mb-2">📐 ${park.area}</p>` : ''}
+            
+            ${park.latest_activation ? `
+                                <div class="flex items-center gap-2 mb-3 text-sm bg-green-50 px-3 py-2 rounded-lg">
+                                    <span class="text-green-600">🔥</span>
+                                    <a href="https://www.qrz.com/db/${park.latest_activation.callsign}" 
+                                       target="_blank"
+                                       class="font-mono font-bold text-blue-600 hover:underline">
+                                        ${park.latest_activation.callsign}
+                                    </a>
+                                    <span class="text-xs text-gray-500">${park.latest_activation.date_human}</span>
+                                </div>
+                            ` : '<div class="mb-3 text-sm text-gray-400 italic">⚡ Ещё не активирован</div>'}
+            
+            <p class="text-sm text-gray-700 mb-4 line-clamp-2">${park.description || 'Городской парк для активаций радиолюбителей'}</p>
+            <a href="/park/${park.id}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold text-sm transition">
+                Подробнее
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </a>
+        </div>
+    `).join('');
         }
 
         // Фильтрация
@@ -358,7 +524,7 @@
             filteredParks = allParks.filter(park => {
                 const matchCity = !cityFilter || park.city === cityFilter;
                 const matchRegion = !regionFilter || park.region === regionFilter;
-                const matchSearch = !searchQuery || 
+                const matchSearch = !searchQuery ||
                     park.name.toLowerCase().includes(searchQuery) ||
                     park.reference.toLowerCase().includes(searchQuery) ||
                     park.city.toLowerCase().includes(searchQuery);
@@ -385,4 +551,5 @@
     </script>
 
 </body>
+
 </html>
