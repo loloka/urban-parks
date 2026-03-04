@@ -21,6 +21,8 @@ UP-RU-SPB-0001 (Россия, Санкт-Петербург)
 UP-UA-KYV-0001 (Украина, Киев) - на будущее
 UP-BY-MSK-0001 (Беларусь, Минск) - на будущее
 
+🌍 Добавлена мультиязычность (RU/EN) для всего интерфейса ✅ Что сделано: - Добавлены переводы интерфейса (resources/lang/ru/ui.php, en/ui.php) - Реализован переключатель языка (RU/EN) в header - Добавлены методы getLocalizedName() и getLocalizedDescription() в модель Park - Обновлена главная страница (welcome.blade.php) с локализацией - Обновлена страница парка (park/show.blade.php) с локализацией - Настроен middleware SetLocale для сохранения языка в сессии - Единый header и footer для всех страниц - Локализованные названия парков на карте и в списках 📊 Охват переводов: - Главная страница: Hero, Nav, Map, Parks, Top Activators, Features, Footer - Страница парка: Header, Park info, Description, Map, Activations, Stats, Rules - Карта: Фильтры, попапы маркеров, счётчики 🔧 Технические детали: - Язык сохраняется в сессии через ?lang=ru или ?lang=en - Fallback на русский язык по умолчанию - Поддержка локализованных полей в БД (name_en, description_en)
+
 ### Улучшено
 
 - ⚡ Оптимизированы SQL запросы (eager loading)
