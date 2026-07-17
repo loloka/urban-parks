@@ -1,0 +1,64 @@
+# CLAUDE.md — контекст проекта Urban Parks (UPTA)
+
+## Что это
+
+Платформа радиолюбительской дипломной программы «Городские парки» (аналог POTA/WWFF). Активаторы работают в эфире из парков и загружают ADIF-логи, охотники связываются с ними и получают дипломы. Владелец проекта — радиолюбитель (позывные R9OGL / UA9OTW), общение на русском.
+
+**Перед любой работой по фичам читай `ARCHITECTURE.md`** — там схема БД, конвейер ADIF-загрузки, дизайн модерации и алгоритм синка с СРР. Roadmap — в §7 там же.
+
+## Стек
+
+- Laravel 12, PHP 8.4, MySQL 8 (utf8mb4)
+- Filament 3 — админка (`/admin`), ресурсы в `app/Filament/`
+- Tailwind CSS 4 + Alpine.js + Vite 7; карты — Leaflet
+- Blade-шаблоны (SPA нет), мультиязычность RU/EN через `resources/lang/*/ui.php` и middleware `SetLocale` (сессия, `?lang=ru|en`)
+
+## Окружение — Docker (НЕ Laragon!)
+
+Проект переведён с Laragon на Docker Compose (хост — Windows + Docker Desktop):
+
+```
+docker compose up -d                       # nginx:8080, mysql:3306, vite:5173
+docker compose exec app php artisan ...    # любые artisan-команды
+docker compose exec app composer ...       # composer
+docker compose exec app php artisan test   # тесты
+docker compose exec node npm run build     # фронт
+```
+
+- PHP-образ: `docker/php/Dockerfile`; конфиги: `docker/nginx/default.conf`, `docker/php/php.ini`
+- `DB_HOST=mysql` (имя сервиса), НЕ `127.0.0.1`
+- Очередь: контейнер `queue` крутит `queue:work` (QUEUE_CONNECTION=database)
+- Команды пользователю давать в PowerShell-синтаксисе (Windows)
+
+## Доменная модель
+
+- `Park` — парк с референсом `UP-RU-NSK-0001` (автогенерация в `Park::boot()` по country_code+region_code)
+- `Activation` — выезд активатора (статусы pending/approved/rejected, константы в модели); публично видимы только approved
+- `Qso` — связи из ADIF-лога активации (дедуп по unique-ключу, индекс `(callsign, qso_date)` для зачёта охотников)
+- `ActivationProof` — фото/скриншот/GPX доказательства присутствия в парке
+- `ActivationObserver` пересчитывает `parks.activation_count`
+
+## ADIF
+
+- Парсер: `app/Services/Adif/AdifParser.php` — фреймворк-независимый, тесты в `tests/Unit/Services/AdifParserTest.php`, фикстура `tests/fixtures/sample.adi`. При изменениях парсера — прогонять тесты
+- Теги программы: `MY_SIG=UPTA` + `MY_SIG_INFO=<референс>`. Легаси-значение `URBAN_PARK` встречается в старом экспорте — принимать, но не генерировать
+- Всё время в QSO — UTC, в БД без конвертаций
+
+## Соглашения
+
+- Стиль PHP: php-cs-fixer (`composer format`), конфиг `.php-cs-fixer.php`; husky + lint-staged на коммит
+- JS/CSS/Blade: prettier + eslint (`npm run lint`, `npm run format`)
+- Комментарии в коде и коммиты — на русском (так принято в проекте)
+- Новые статусные поля — VARCHAR + константы в модели, НЕ ENUM (миграции ENUM болезненны в MySQL)
+- Пользовательские файлы — только private-диск storage, имена UUID, отдача через контроллер
+- `status` активации никогда не принимать из request — форсить pending на сервере
+
+## Известные проблемы (код-ревью 17.07.2026, не всё исправлено)
+
+1. `ActivationObserver` считает в `activation_count` ВСЕ активации, а публичная статистика — только approved. Решить: считать только approved либо два счётчика
+2. `Park::boot()` генерация референса — race condition при конкурентном создании (не критично, парки создаёт админ)
+3. `ParkController::exportAdif` пишет фейковые TIME_ON/BAND/MODE — после появления таблицы `qsos` экспортировать реальные данные
+4. Публичная форма активации (`activations.store`) без rate limiting и captcha
+5. Дубликаты активаций не запрещены на уровне БД (same callsign+park+date)
+6. В корне репозитория лежит мусорная папка `-p` (артефакт `mkdir -p` на Windows) — удалить руками
+7. `welcome.blade.php` — монолит на 33 КБ, просится разбивка на компоненты

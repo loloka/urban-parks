@@ -1,147 +1,125 @@
 <div align="center">
 
-# 🌳 Urban Parks
+# 🌳 Urban Parks (UPTA)
 
-Международная радиолюбительская программа для работы из городских парков
+Международная радиолюбительская дипломная программа для работы из городских парков
 
-[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square)](https://laravel.com) [![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?style=flat-square)](https://php.net) [![Tailwind](https://img.shields.io/badge/Tailwind-4.x-38B2AC?style=flat-square)](https://tailwindcss.com)
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square)](https://laravel.com) [![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?style=flat-square)](https://php.net) [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square)](https://docs.docker.com/compose/) [![Tailwind](https://img.shields.io/badge/Tailwind-4.x-38B2AC?style=flat-square)](https://tailwindcss.com)
 
 </div>
 
 ## О проекте
 
-Urban Parks — платформа для радиолюбителей, активирующих городские парки (вдохновлена POTA и WWFF).
+Urban Parks — платформа для радиолюбителей, активирующих городские парки (вдохновлена POTA и WWFF). Активаторы выезжают в парки и проводят QSO, охотники связываются с ними и зарабатывают дипломы.
 
-**Возможности:** Интерактивная карта · 18+ парков России · Логирование активаций · Фильтры и поиск · Админ-панель · Статистика
+**Возможности:** интерактивная карта · каталог парков · активации с модерацией · ADIF-экспорт · рейтинг активаторов · мультиязычность RU/EN · админ-панель
+
+Архитектура ADIF-загрузки, модерации и автозачёта: см. [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Технологии
 
-- **Админка:** Filament 3
 - **Backend:** Laravel 12.x, PHP 8.4
-- **Frontend:** Tailwind CSS 3.x, Alpine.js
-- **Карты:** Leaflet.js + MarkerCluster OpenStreetMap
+- **Админка:** Filament 3
+- **Frontend:** Tailwind CSS 4, Alpine.js, Vite
+- **Карты:** Leaflet.js + MarkerCluster (OpenStreetMap)
 - **База данных:** MySQL 8.0
-- **Деплой:** Vite, npm
+- **Окружение:** Docker Compose (nginx, php-fpm, mysql, node, queue worker)
 
-## Установка
+## Быстрый старт (Docker)
 
-### Требования:
+Требуется только [Docker Desktop](https://www.docker.com/products/docker-desktop/). PHP, Composer, Node и MySQL на хост ставить не нужно.
 
-- PHP >= 8.2
-- Composer
-- Node.js >= 18
-- MySQL >= 8.0
-
-```bash
+```powershell
 git clone https://github.com/loloka/urban-parks.git
 cd urban-parks
-composer install && npm install
-cp .env.example .env
-php artisan key:generate
-mysql -u root -e "CREATE DATABASE urban_parks;"
-php artisan migrate --seed
-php artisan make:filament-user
-php artisan serve & npm run dev
+copy .env.example .env
 
-Сайт: http://localhost:8000 · Админка: http://localhost:8000/admin
+# Поднять контейнеры (первый раз соберётся образ PHP, ~2-3 минуты)
+docker compose up -d --build
 
-Структура
+# Зависимости и инициализация
+docker compose exec app composer install
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan make:filament-user
+```
 
-urban-parks/
-├── app/Filament/          # Админ-панель (Resources, Widgets)
-├── app/Http/Controllers/  # ParkController, ApiController
-├── app/Models/            # Park, Activation
-├── database/migrations/   # Миграции БД
-├── database/seeders/      # Тестовые данные (18 парков)
-├── resources/views/       # Blade шаблоны
-└── routes/                # web.php, api.php
+Готово:
 
-API
-GET /api/parks (параметры: city, region, search)
-GET /api/cities
-GET /api/regions
+- Сайт: http://localhost:8080
+- Админка: http://localhost:8080/admin
+- Vite HMR: порт 5173 (контейнер `node` запускает `npm run dev` сам)
+- MySQL снаружи (HeidiSQL/DBeaver): `localhost:3306`, логин/пароль из `.env`
 
+### Полезные команды
 
-Парки
-Новосибирск (6): UP-0001 Центральный · UP-0002 Заельцовский · UP-0003 Березовая роща · UP-0004 Сосновый бор · UP-0005 Городское начало · UP-0006 Нарымский сквер
+```powershell
+docker compose exec app php artisan migrate     # миграции
+docker compose exec app php artisan test        # тесты
+docker compose exec app composer format         # php-cs-fixer
+docker compose exec node npm run build          # прод-сборка фронта
+docker compose logs -f app                      # логи PHP
+docker compose down                             # остановить (данные БД сохраняются)
+docker compose down -v                          # остановить и стереть БД
+```
 
-Москва (4): UP-0007 Горького · UP-0008 Сокольники · UP-0009 Коломенское · UP-0010 Победы
+Порты можно поменять в `.env`: `APP_PORT`, `FORWARD_DB_PORT`, `VITE_PORT`.
 
-СПб (4): UP-0011 Летний сад · UP-0012 Александровский · UP-0013 Таврический · UP-0017 Парк 300-летия
+### Контейнеры
 
-Другие (4): UP-0014 Белоусова (Тула) · UP-0015 Маяковского (Екб) · UP-0016 Горького (Казань) · UP-0018 Ботанический (Влд)
+| Сервис | Что делает |
+|---|---|
+| `app` | PHP 8.4 FPM + Composer (образ из `docker/php/Dockerfile`) |
+| `nginx` | Веб-сервер, порт 8080 → 80 |
+| `mysql` | MySQL 8.0, данные в томе `mysql-data` |
+| `queue` | `php artisan queue:work` — фоновые задачи |
+| `node` | Vite dev-сервер с HMR (только для разработки) |
 
-Roadmap
-v1.0 (текущая): Карта · Парки · Админка · API
-
-v1.1 (в работе): Авторизация · Публичная форма · Личный кабинет · Дипломы · ADIF экспорт
-
-v2.0 (план): Telegram бот · QRZ интеграция · Другие страны · Мобильное приложение · Ham2K API
-
-
-Добавлено 04.03
-- 📍 Просматривать каталог парков на интерактивной карте
-- 📡 Добавлять и модерировать активации
-- 🏆 Отслеживать рейтинги активаторов
-- 📥 Экспортировать данные в ADIF
-- 🎖️ Получать дипломы за достижения
-
----
-
-## 🚀 Версия 1.1 (04.03.2026)
-
-### ✅ Реализованные функции:
-
-#### **Основные возможности:**
-- ✅ Интерактивная карта парков (Leaflet + кластеризация)
-- ✅ Каталог парков с фильтрами (город, регион, поиск)
-- ✅ Детальные страницы парков с информацией
-- ✅ Добавление активаций через форму
-- ✅ Админ-панель для модерации активаций
-- ✅ Статистика на главной странице
-
-#### **Новое в v1.1:**
-- 🆕 **QRZ.com интеграция** — позывные кликабельны
-- 🆕 **Экспорт в ADIF** — скачивание логов парка
-- 🆕 **Топ активаторов** — рейтинг с медалями 🥇🥈🥉
-- 🆕 **Последние активации** — лента на главной
-- 🆕 **Улучшенный дизайн** — современный UI/UX
-
-
-
-
-📝 Roadmap
-🔜 Планируется в v1.2:
- Страница всех активаций — таблица с фильтрами и поиском
- Личный кабинет активатора — мои активации, статистика
- Страница дипломов — условия получения и список владельцев
- Email уведомления — модератору и активаторам
- RSS лента — подписка на новые активации
-🎯 Будущие фичи (v1.3+):
- Импорт ADIF из Ham2K — автозаполнение через файл
- Telegram бот — поиск парков, уведомления
- Тепловая карта активности — визуализация популярности парков
- PDF сертификаты — генерация дипломов с QR-кодом
- Автоподсчёт дипломов — отслеживание прогресса
- Экспорт в CSV/KML/GPX — для Excel/Google Earth/навигаторов
- API для сторонних приложений — интеграция с Ham2K, Log4OM
-
-
- ===================================
-
-Лицензия
-MIT License
-
-Авторы
-R9OGL & UA9OTW @loloka
-
-Благодарности: POTA · WWFF · OpenStreetMap · Laragon · Laravel
-
-Контакты
-📧 info@urbanparks.ru · 📱 @urbanparks · 🌐 vk.com/urbanparks
-
-73! Приятных QSO из парков! 📡🌳
-
-Made with ❤️ by ham radio operators
+## Структура
 
 ```
+urban-parks/
+├── app/Filament/          # Админ-панель (Resources, Widgets)
+├── app/Http/Controllers/  # ParkController, ActivationController
+├── app/Models/            # Park, Activation, Qso, ActivationProof
+├── app/Services/Adif/     # Парсер ADIF-логов (+ тесты)
+├── database/migrations/   # Миграции БД
+├── database/seeders/      # Тестовые данные
+├── docker/                # Dockerfile, конфиги nginx и PHP
+├── resources/views/       # Blade-шаблоны
+├── routes/web.php         # Роуты + API
+└── ARCHITECTURE.md        # Архитектура UPTA (БД, ADIF, модерация, СРР)
+```
+
+## API
+
+- `GET /api/parks` — парки (параметры: `city`, `region`, `search`)
+- `GET /api/cities` — города со счётчиками
+- `GET /api/regions` — регионы со счётчиками
+- `GET /park/{park}/adif` — экспорт активаций парка в ADIF
+
+## Формат референсов
+
+`UP-<страна>-<регион>-<номер>`: например `UP-RU-NSK-0001` (Россия, Новосибирская область). Номер выдаётся автоматически при создании парка в админке.
+
+## Roadmap
+
+- **v1.2 (в работе):** загрузка ADIF-логов активаторами · таблица QSO · фото-пруфы · экран модерации · личный кабинет
+- **v1.3:** дипломы и PDF-сертификаты · статистика охотников · email-уведомления
+- **v2.0:** синхронизация с СРР (автозачёт охотников) · Telegram-бот · другие страны
+
+Подробности — в [ARCHITECTURE.md](ARCHITECTURE.md), §7.
+
+## Лицензия
+
+MIT License
+
+## Авторы
+
+R9OGL & UA9OTW · [@loloka](https://github.com/loloka)
+
+Благодарности: POTA · WWFF · OpenStreetMap · Laravel
+
+📧 info@urbanparks.ru · 🌐 vk.com/urbanparks
+
+**73! Приятных QSO из парков!** 📡🌳

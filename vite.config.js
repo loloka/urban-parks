@@ -11,8 +11,18 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
+        // Для работы внутри Docker: слушаем все интерфейсы,
+        // HMR ходит через проброшенный порт на localhost
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'localhost',
+        },
         watch: {
-            ignored: ['**/storage/framework/views/**'],
+            // На Windows-томах inotify не работает — используем polling
+            usePolling: true,
+            ignored: ['**/storage/framework/views/**', '**/vendor/**', '**/node_modules/**'],
         },
     },
 });

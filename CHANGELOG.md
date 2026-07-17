@@ -4,6 +4,29 @@
 
 ---
 
+## [Unreleased] — 1.2.0
+
+### Добавлено
+
+- 🐳 **Docker-окружение вместо Laragon**: `docker compose up -d` поднимает nginx + PHP 8.4 FPM + MySQL 8 + Vite + queue worker. Конфиги в `docker/`, порты настраиваются через `.env`
+- 📦 **ADIF-парсер** (`app/Services/Adif/AdifParser.php`): разбор .adi-логов с валидацией CALL/QSO_DATE/TIME_ON/BAND/MODE, извлечением MY_SIG/MY_SIG_INFO и SIG/SIG_INFO (park-to-park), автоконвертацией Windows-1251, лимитами на размер и число записей. Покрыт unit-тестами (`tests/Unit/Services/AdifParserTest.php`)
+- 🗄️ **Миграции фундамента v1.2**: таблица `qsos` (связи из логов с дедупликацией и индексом для автозачёта охотников), таблица `activation_proofs` (фото/скриншоты/GPX), поля `user_id`/`adif_path`/`source` в `activations`
+- 🧩 Модели `Qso`, `ActivationProof`; константы статусов и новые связи в `Activation`
+- 📐 **ARCHITECTURE.md** — полная архитектура UPTA: схема БД, конвейер загрузки логов, экран модерации «за 10 секунд», алгоритм синхронизации с API СРР
+- 🤖 CLAUDE.md — контекст проекта для AI-ассистентов
+
+### Изменено
+
+- ⚙️ `vite.config.js`: host/HMR/polling для работы Vite внутри Docker на Windows
+- ⚙️ `.env.example`: MySQL по умолчанию (хост `mysql`), порты Docker, локаль `ru`
+- 🔧 `composer.json`: скрипты `format`/`format:check` перенесены в секцию `scripts` (раньше лежали в корне и не работали)
+
+### Исправлено
+
+- 🐛 Невалидная структура `composer.json` (ключи вне схемы)
+
+---
+
 ## [1.1.0] - 2026-03-04
 
 ### Добавлено
@@ -13,15 +36,8 @@
 - 🆕 Топ 10 активаторов на главной странице
 - 🆕 Отображение последней активации на карточках парков
 - 🆕 Лента последних активаций в Hero секции
-
-международная классификация форматов
-UP-RU-NSK-0001 (Россия, Новосибирская область)
-UP-RU-MSK-0001 (Россия, Московская область)
-UP-RU-SPB-0001 (Россия, Санкт-Петербург)
-UP-UA-KYV-0001 (Украина, Киев) - на будущее
-UP-BY-MSK-0001 (Беларусь, Минск) - на будущее
-
-🌍 Добавлена мультиязычность (RU/EN) для всего интерфейса ✅ Что сделано: - Добавлены переводы интерфейса (resources/lang/ru/ui.php, en/ui.php) - Реализован переключатель языка (RU/EN) в header - Добавлены методы getLocalizedName() и getLocalizedDescription() в модель Park - Обновлена главная страница (welcome.blade.php) с локализацией - Обновлена страница парка (park/show.blade.php) с локализацией - Настроен middleware SetLocale для сохранения языка в сессии - Единый header и footer для всех страниц - Локализованные названия парков на карте и в списках 📊 Охват переводов: - Главная страница: Hero, Nav, Map, Parks, Top Activators, Features, Footer - Страница парка: Header, Park info, Description, Map, Activations, Stats, Rules - Карта: Фильтры, попапы маркеров, счётчики 🔧 Технические детали: - Язык сохраняется в сессии через ?lang=ru или ?lang=en - Fallback на русский язык по умолчанию - Поддержка локализованных полей в БД (name_en, description_en)
+- 🌍 Мультиязычность (RU/EN): переводы интерфейса (`resources/lang`), переключатель языка, middleware `SetLocale`, локализованные поля парков (`name_en`, `description_en`)
+- 🌍 Международный формат референсов: `UP-RU-NSK-0001` (страна, регион, номер)
 
 ### Улучшено
 
