@@ -39,6 +39,14 @@
                         class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition">
                         ➕ {{ __('ui.nav.add_activation') }}
                     </a>
+                    @auth
+                        <a href="{{ route('cabinet') }}"
+                            class="text-gray-700 hover:text-[--color-primary-600] transition font-semibold">👤
+                            {{ __('ui.nav.cabinet') }}</a>
+                    @else
+                        <a href="{{ route('login') }}"
+                            class="text-gray-700 hover:text-[--color-primary-600] transition font-semibold">{{ __('ui.nav.login') }}</a>
+                    @endauth
                     <div class="flex items-center gap-2 ml-4 border-l pl-4">
                         <a href="?lang=ru"
                             class="px-2 py-1 rounded {{ app()->getLocale() === 'ru' ? 'bg-blue-100 text-blue-800 font-bold' : 'text-gray-600 hover:bg-gray-100' }}">RU</a>

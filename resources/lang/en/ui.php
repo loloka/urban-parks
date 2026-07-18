@@ -8,6 +8,8 @@ return [
         'top' => 'Top',
         'add_activation' => 'Add Activation',
         'diplomas' => 'Awards',
+        'cabinet' => 'Cabinet',
+        'login' => 'Log in',
     ],
 
     // Hero section
@@ -150,6 +152,12 @@ return [
         'photos' => 'Photos',
         'no_photos' => 'No photos attached',
         'log_summary' => 'Log summary',
+        'log' => 'QSO log',
+        'col_time' => 'Time',
+        'col_callsign' => 'Callsign',
+        'col_band' => 'Band',
+        'col_mode' => 'Mode',
+        'rst_hint' => 'sent / received',
         'total_qso' => 'Total QSO',
         'bands' => 'Bands',
         'modes' => 'Modes',

@@ -12,7 +12,10 @@
     <div class="max-w-2xl mx-auto py-12 px-4">
         <!-- Хедер -->
         <div class="mb-8">
-            <a href="/" class="text-blue-600 hover:underline">← На главную</a>
+            <div class="flex items-center justify-between">
+                <a href="/" class="text-blue-600 hover:underline">← На главную</a>
+                <a href="{{ route('cabinet') }}" class="text-blue-600 hover:underline">👤 Мой кабинет</a>
+            </div>
             <h1 class="text-4xl font-bold mt-4">📡 Загрузить активацию</h1>
             <p class="text-gray-600 mt-2">
                 Прикрепите ADIF-лог и скриншот из QTHnow. Активация будет проверена модератором.
@@ -66,8 +69,12 @@
             <!-- Позывной -->
             <div>
                 <label class="block font-semibold mb-2">Позывной *</label>
-                <input type="text" name="callsign" value="{{ old('callsign') }}" placeholder="R9OGL" required
+                <input type="text" name="callsign" value="{{ old('callsign', $user?->callsign) }}"
+                    placeholder="R9OGL" required
                     class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 uppercase">
+                <p class="text-xs text-gray-500 mt-1">
+                    Подставлен из профиля — измените, если работали спец-позывным или с /P.
+                </p>
                 @error('callsign')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                 @enderror

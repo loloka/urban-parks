@@ -16,11 +16,12 @@ class ActivationController extends Controller
     /**
      * Форма загрузки лога активации
      */
-    public function create()
+    public function create(\Illuminate\Http\Request $request)
     {
         $parks = Park::active()->orderBy('reference')->get();
+        $user = $request->user();
 
-        return view('activations.create', compact('parks'));
+        return view('activations.create', compact('parks', 'user'));
     }
 
     /**
@@ -33,7 +34,8 @@ class ActivationController extends Controller
                 $request->validated(),
                 $request->file('adif'),
                 $request->file('screenshot'),
-                $request->file('photos', [])
+                $request->file('photos', []),
+                $request->user()?->id
             );
         } catch (AdifParseException $e) {
             return back()->withInput()->withErrors(['adif' => $e->getMessage()]);
@@ -66,8 +68,8 @@ class ActivationController extends Controller
         // Только фото (type=photo) публичны; QTHnow-скриншот и GPX сюда не попадают
         $photos = $activation->proofs->where('type', ActivationProof::TYPE_PHOTO);
 
-        // Сводка лога по сохранённым QSO
-        $qsos = $activation->qsos()->get();
+        // Журнал QSO для отображения + сводка
+        $qsos = $activation->qsos()->orderBy('time_on')->get();
         $summary = [
             'total'  => $qsos->count(),
             'bands'  => $qsos->groupBy('band')->map->count()->sortDesc(),
@@ -77,7 +79,7 @@ class ActivationController extends Controller
             'has_log'    => $qsos->isNotEmpty(),
         ];
 
-        return view('activations.show', compact('activation', 'photos', 'summary'));
+        return view('activations.show', compact('activation', 'photos', 'summary', 'qsos'));
     }
 
     /**

@@ -8,7 +8,7 @@ class StoreActivationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // пока без регистрации; позже: только авторизованные
+        return $this->user() !== null; // только авторизованные активаторы
     }
 
     public function rules(): array

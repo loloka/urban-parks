@@ -35,6 +35,14 @@
                         class="text-gray-700 hover:text-[--color-primary-600] transition">{{ __('ui.home') }}</a>
                     <a href="{{ route('parks.index') }}"
                         class="text-gray-700 hover:text-[--color-primary-600] transition">{{ __('ui.nav.parks') }}</a>
+                    @auth
+                        <a href="{{ route('cabinet') }}"
+                            class="text-gray-700 hover:text-[--color-primary-600] transition font-semibold">👤
+                            {{ __('ui.nav.cabinet') }}</a>
+                    @else
+                        <a href="{{ route('login') }}"
+                            class="text-gray-700 hover:text-[--color-primary-600] transition font-semibold">{{ __('ui.nav.login') }}</a>
+                    @endauth
                     <div class="flex items-center gap-2 ml-4 border-l pl-4">
                         <a href="?lang=ru"
                             class="px-2 py-1 rounded {{ app()->getLocale() === 'ru' ? 'bg-blue-100 text-blue-800 font-bold' : 'text-gray-600 hover:bg-gray-100' }}">RU</a>
@@ -104,6 +112,56 @@
                             <h2 class="text-xl font-bold text-gray-900 mb-3">💬 {{ __('ui.activation_page.notes') }}
                             </h2>
                             <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ $activation->notes }}</p>
+                        </div>
+                    @endif
+
+                    @if ($qsos->count())
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">📻 {{ __('ui.activation_page.log') }}
+                                <span class="text-base font-normal text-gray-500">· {{ $qsos->count() }}</span>
+                            </h2>
+                            <div class="overflow-auto max-h-[28rem] rounded-lg border border-gray-100">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-50 text-gray-600 sticky top-0">
+                                        <tr>
+                                            <th class="px-3 py-2 text-left font-semibold">#</th>
+                                            <th class="px-3 py-2 text-left font-semibold">
+                                                {{ __('ui.activation_page.col_time') }}</th>
+                                            <th class="px-3 py-2 text-left font-semibold">
+                                                {{ __('ui.activation_page.col_callsign') }}</th>
+                                            <th class="px-3 py-2 text-left font-semibold">
+                                                {{ __('ui.activation_page.col_band') }}</th>
+                                            <th class="px-3 py-2 text-left font-semibold">
+                                                {{ __('ui.activation_page.col_mode') }}</th>
+                                            <th class="px-3 py-2 text-center font-semibold"
+                                                title="{{ __('ui.activation_page.rst_hint') }}">RST</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        @foreach ($qsos as $i => $qso)
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-3 py-2 text-gray-400">{{ $i + 1 }}</td>
+                                                <td class="px-3 py-2 font-mono text-gray-600">
+                                                    {{ \Illuminate\Support\Str::of($qso->time_on)->substr(0, 5) }}</td>
+                                                <td class="px-3 py-2">
+                                                    <a href="https://www.qrz.com/db/{{ $qso->callsign }}" target="_blank"
+                                                        class="font-mono font-bold text-blue-600 hover:underline">{{ $qso->callsign }}</a>
+                                                </td>
+                                                <td class="px-3 py-2"><span
+                                                        class="font-mono px-2 py-0.5 bg-blue-50 text-blue-700 rounded">{{ $qso->band }}</span>
+                                                </td>
+                                                <td class="px-3 py-2"><span
+                                                        class="font-mono px-2 py-0.5 bg-purple-50 text-purple-700 rounded">{{ $qso->mode }}</span>
+                                                </td>
+                                                <td class="px-3 py-2 text-center font-mono text-gray-500">
+                                                    {{ $qso->rst_sent ?: '—' }} / {{ $qso->rst_rcvd ?: '—' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-2">{{ __('ui.activation_page.time_utc') }} ·
+                                RST — {{ __('ui.activation_page.rst_hint') }}</p>
                         </div>
                     @endif
                 </div>

@@ -36,7 +36,7 @@ class ActivationImporter
      *
      * @throws AdifParseException если лог не разобрался или в нём нет валидных QSO
      */
-    public function import(array $data, UploadedFile $adif, UploadedFile $screenshot, array $photos = []): array
+    public function import(array $data, UploadedFile $adif, UploadedFile $screenshot, array $photos = [], ?int $userId = null): array
     {
         $park = Park::findOrFail($data['park_id']);
         $callsign = strtoupper($data['callsign']);
@@ -95,10 +95,11 @@ class ActivationImporter
         try {
             return DB::transaction(function () use (
                 $park, $callsign, $data, $records, $result,
-                $activationDate, $adifPath, $proofFiles, $dir, &$storedPaths, $warnings
+                $activationDate, $adifPath, $proofFiles, $dir, &$storedPaths, $warnings, $userId
             ) {
                 $activation = Activation::create([
                     'park_id' => $park->id,
+                    'user_id' => $userId,
                     'callsign' => $callsign,
                     'activation_date' => $activationDate,
                     'qso_count' => count($records),

@@ -46,6 +46,15 @@
                     <a href="#"
                         class="text-gray-700 hover:text-[--color-primary-600] transition">{{ __('ui.nav.diplomas') }}</a>
 
+                    @auth
+                        <a href="{{ route('cabinet') }}"
+                            class="text-gray-700 hover:text-[--color-primary-600] transition font-semibold">👤
+                            {{ __('ui.nav.cabinet') }}</a>
+                    @else
+                        <a href="{{ route('login') }}"
+                            class="text-gray-700 hover:text-[--color-primary-600] transition font-semibold">{{ __('ui.nav.login') }}</a>
+                    @endauth
+
                     <!-- Language Switcher -->
                     <div class="flex items-center gap-2 ml-4 border-l pl-4">
                         <a href="?lang=ru"

@@ -8,6 +8,8 @@ return [
         'top' => 'Топ',
         'add_activation' => 'Добавить активацию',
         'diplomas' => 'Дипломы',
+        'cabinet' => 'Кабинет',
+        'login' => 'Войти',
     ],
 
     // Hero секция
@@ -150,6 +152,12 @@ return [
         'photos' => 'Фотографии',
         'no_photos' => 'Фотографии не приложены',
         'log_summary' => 'Сводка лога',
+        'log' => 'Журнал QSO',
+        'col_time' => 'Время',
+        'col_callsign' => 'Позывной',
+        'col_band' => 'Диапазон',
+        'col_mode' => 'Мода',
+        'rst_hint' => 'отправлен / принят',
         'total_qso' => 'Всего QSO',
         'bands' => 'Диапазоны',
         'modes' => 'Виды',
