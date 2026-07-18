@@ -20,7 +20,7 @@ return [
             'cities' => 'Cities',
             'regions' => 'Regions',
         ],
-        'featured_city' => 'Program capital: Novosibirsk (:count parks)',
+        'featured_city' => 'Program capital: :city · :count parks',
         'latest_activation' => 'Latest activation:',
     ],
 
@@ -50,7 +50,7 @@ return [
 
     // Parks
     'parks' => [
-        'title' => 'Recent Parks',
+        'title' => 'Recently added parks',
         'latest_activator' => 'Latest:',
         'not_activated' => 'Not activated yet',
         'activations_count' => 'Activations',
@@ -133,4 +133,31 @@ return [
     'portable_equipment' => 'Portable equipment',
     'home' => 'Home',
     'navigation' => 'Navigation',
+
+    // All parks list
+    'parks_index' => [
+        'title' => 'All parks',
+        'subtitle' => 'Parks and gardens of the Urban Parks program',
+        'activations' => 'activations',
+        'more_details' => 'More details',
+        'empty' => 'No parks found',
+    ],
+
+    // Public activation page
+    'activation_page' => [
+        'title' => 'Activation',
+        'in_park' => 'in park',
+        'photos' => 'Photos',
+        'no_photos' => 'No photos attached',
+        'log_summary' => 'Log summary',
+        'total_qso' => 'Total QSO',
+        'bands' => 'Bands',
+        'modes' => 'Modes',
+        'time_utc' => 'Time (UTC)',
+        'download_adif' => 'Download ADIF',
+        'no_log' => 'Log not available',
+        'notes' => 'Activator notes',
+        'view' => 'Details',
+        'pending_notice' => 'This activation is not approved yet — this page is visible only to you as a moderator.',
+    ],
 ];

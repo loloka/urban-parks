@@ -10,7 +10,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ParkSeeder::class,
-            ActivationSeeder::class, // Добавляем
+            // ActivationSeeder — только для локальной разработки (тестовые активации).
+            // Намеренно НЕ вызывается: на боевом деплое нужны реальные данные, без тестовых.
+            // Запустить вручную при необходимости: php artisan db:seed --class=ActivationSeeder
         ]);
     }
 }

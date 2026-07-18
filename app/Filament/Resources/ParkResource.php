@@ -44,6 +44,12 @@ class ParkResource extends Resource
                             ->maxLength(255)
                             ->columnSpanFull(),
 
+                        Forms\Components\TextInput::make('name_en')
+                            ->label('Название (EN)')
+                            ->maxLength(255)
+                            ->helperText('Английское название для EN-локали')
+                            ->columnSpanFull(),
+
                         Forms\Components\TextInput::make('city')
                             ->label('Город')
                             ->required()
@@ -57,21 +63,29 @@ class ParkResource extends Resource
 
                 Forms\Components\Section::make('Координаты')
                     ->schema([
+                        Forms\Components\ViewField::make('map_picker')
+                            ->label('Карта')
+                            ->view('filament.forms.coordinate-map')
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
                         Forms\Components\TextInput::make('latitude')
                             ->label('Широта')
                             ->required()
                             ->numeric()
                             ->step(0.0000001)
+                            ->live(onBlur: true)
                             ->placeholder('55.751244')
-                            ->helperText('Формат: 55.751244'),
+                            ->helperText('Заполняется кликом по карте; можно ввести вручную'),
 
                         Forms\Components\TextInput::make('longitude')
                             ->label('Долгота')
                             ->required()
                             ->numeric()
                             ->step(0.0000001)
+                            ->live(onBlur: true)
                             ->placeholder('37.618423')
-                            ->helperText('Формат: 37.618423'),
+                            ->helperText('Заполняется кликом по карте; можно ввести вручную'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Дополнительно')
@@ -79,6 +93,12 @@ class ParkResource extends Resource
                         Forms\Components\Textarea::make('description')
                             ->label('Описание')
                             ->rows(4)
+                            ->columnSpanFull(),
+
+                        Forms\Components\Textarea::make('description_en')
+                            ->label('Описание (EN)')
+                            ->rows(4)
+                            ->helperText('Английское описание для EN-локали')
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('area')

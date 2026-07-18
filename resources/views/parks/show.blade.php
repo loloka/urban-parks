@@ -15,27 +15,27 @@
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <a href="/"
-                        class="w-12 h-12 bg-[--color-primary-600] rounded-lg flex items-center justify-center hover:bg-[--color-primary-700] transition">
+                <a href="{{ route('home') }}" class="flex items-center space-x-4 group">
+                    <div
+                        class="w-12 h-12 bg-[--color-primary-600] rounded-lg flex items-center justify-center group-hover:bg-[--color-primary-700] transition">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                    </a>
+                    </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Urban Parks</h1>
+                        <h1 class="text-2xl font-bold text-gray-900 group-hover:text-[--color-primary-600] transition">Urban Parks</h1>
                         <p class="text-sm text-gray-600">{{ __('ui.hero.subtitle') }}</p>
                     </div>
-                </div>
+                </a>
                 <nav class="hidden md:flex items-center space-x-6">
                     <a href="/"
                         class="text-gray-700 hover:text-[--color-primary-600] transition">{{ __('ui.home') }}</a>
                     <a href="/#map"
                         class="text-gray-700 hover:text-[--color-primary-600] transition">{{ __('ui.map.title') }}</a>
-                    <a href="/#parks"
+                    <a href="{{ route('parks.index') }}"
                         class="text-gray-700 hover:text-[--color-primary-600] transition">{{ __('ui.nav.parks') }}</a>
                     <a href="/#top" class="text-gray-700 hover:text-[--color-primary-600] transition">🏆
                         {{ __('ui.nav.top') }}</a>
@@ -150,6 +150,11 @@
                                                 </a>
                                                 <span class="text-sm text-gray-500 ml-2">{{ $activation->qso_count }}
                                                     {{ __('ui.park.qso_count') }}</span>
+                                                @if ($activation->photos_count)
+                                                    <span class="text-sm text-gray-500 ml-2"
+                                                        title="{{ __('ui.activation_page.photos') }}">📷
+                                                        {{ $activation->photos_count }}</span>
+                                                @endif
                                             </div>
                                             <span
                                                 class="text-sm text-gray-600">{{ $activation->activation_date->format('d.m.Y') }}</span>
@@ -157,6 +162,17 @@
                                         @if ($activation->notes)
                                             <p class="text-sm text-gray-600 mt-1">💬 {{ $activation->notes }}</p>
                                         @endif
+                                        <div class="mt-2">
+                                            <a href="{{ route('activations.show', $activation) }}"
+                                                class="text-sm font-semibold text-[--color-primary-600] hover:underline inline-flex items-center gap-1">
+                                                {{ __('ui.activation_page.view') }}
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </a>
+                                        </div>
                                     </div>
                                 @endforeach
                             </div>
@@ -182,14 +198,6 @@
                     <div class="bg-white rounded-xl shadow-md p-6">
                         <h3 class="text-lg font-bold text-gray-900 mb-4">⚡ {{ __('ui.actions') }}</h3>
                         <div class="space-y-3">
-                            <a href="{{ route('park.adif', $park) }}"
-                                class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                {{ __('ui.park.export_adif') }}
-                            </a>
                             <a href="{{ route('activations.create') }}"
                                 class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

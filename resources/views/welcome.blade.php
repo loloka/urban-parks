@@ -17,8 +17,8 @@
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-[--color-primary-600] rounded-lg flex items-center justify-center">
+                <a href="{{ route('home') }}" class="flex items-center space-x-4 group">
+                    <div class="w-12 h-12 bg-[--color-primary-600] rounded-lg flex items-center justify-center group-hover:bg-[--color-primary-700] transition">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -27,14 +27,14 @@
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Urban Parks</h1>
+                        <h1 class="text-2xl font-bold text-gray-900 group-hover:text-[--color-primary-600] transition">Urban Parks</h1>
                         <p class="text-sm text-gray-600">{{ __('ui.hero.subtitle') }}</p>
                     </div>
-                </div>
+                </a>
                 <nav class="hidden md:flex items-center space-x-6">
                     <a href="#map"
                         class="text-gray-700 hover:text-[--color-primary-600] transition">{{ __('ui.nav.map') }}</a>
-                    <a href="#parks"
+                    <a href="{{ route('parks.index') }}"
                         class="text-gray-700 hover:text-[--color-primary-600] transition">{{ __('ui.nav.parks') }}</a>
                     <a href="#top" class="text-gray-700 hover:text-[--color-primary-600] transition">🏆
                         {{ __('ui.nav.top') }}</a>
@@ -90,9 +90,11 @@
             </div>
 
             <div class="mt-8 flex flex-col md:flex-row items-center justify-center gap-4">
-                <div class="inline-block bg-yellow-400 text-gray-900 px-6 py-3 rounded-full font-bold">
-                    🏆 {{ __('ui.hero.featured_city', ['count' => 6]) }}
-                </div>
+                @if ($featuredCity)
+                    <div class="inline-block bg-yellow-400 text-gray-900 px-6 py-3 rounded-full font-bold">
+                        🏆 {{ __('ui.hero.featured_city', ['city' => $featuredCity->city, 'count' => $featuredCity->parks_count]) }}
+                    </div>
+                @endif
 
                 @if ($latestActivation)
                     <div
@@ -108,6 +110,9 @@
                         </a>
                         <span
                             class="text-xs text-blue-200">({{ $latestActivation->activation_date->diffForHumans() }})</span>
+                        <a href="{{ route('activations.show', $latestActivation) }}"
+                            class="ml-1 underline decoration-dotted hover:text-white"
+                            title="{{ __('ui.activation_page.view') }}">👁</a>
                     </div>
                 @endif
             </div>
@@ -531,7 +536,9 @@
 
                 filteredParks = sortedParks;
                 updateMap(sortedParks);
-                renderParksList(sortedParks.slice(0, 6));
+                // «Последние добавленные» — самые новые парки (по возрастанию id → новые выше)
+                const recentlyAdded = [...parks].sort((a, b) => b.id - a.id).slice(0, 6);
+                renderParksList(recentlyAdded);
             })
             .catch(error => {
                 console.error('Error loading parks:', error);
@@ -598,9 +605,9 @@
             }
 
             container.innerHTML = parks.map(park => {
-                const parkName = currentLocale === 'en' && park.name_en ? park.name_en : park.name;
-                const parkDescription = currentLocale === 'en' && park.description_en ? park.description_en : park
-                    .description;
+                // name и description уже приходят из API локализованными по текущему языку
+                const parkName = park.name;
+                const parkDescription = park.description;
 
                 return `
                     <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition transform hover:-translate-y-1">
