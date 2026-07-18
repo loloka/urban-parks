@@ -150,14 +150,21 @@ CREATE TABLE activation_likes (
 
 Лайки проще комментариев (не нужна модерация текста) — начать с них. Комментарии без регистрации требуют rate limiting + honeypot; проще открыть их только пользователям с аккаунтом.
 
-**users** — расширение 🔜 (следующий шаг, когда появится регистрация активаторов)
+**users** — расширение ✅ (реализовано 18.07.2026)
 
 ```sql
 ALTER TABLE users
     ADD callsign VARCHAR(20) NULL UNIQUE,          -- основной позывной
-    ADD role ENUM('user','moderator','admin') DEFAULT 'user',
-    ADD srr_token_encrypted TEXT NULL;             -- Bearer-токен СРР, шифровать Crypt::encryptString()
+    ADD role    VARCHAR(20) DEFAULT 'user';        -- VARCHAR+константы User::ROLE_* (не ENUM)
+-- srr_token_encrypted — отложено до интеграции с СРР (§5)
 ```
+
+Факт реализации:
+- Миграции `add_callsign_and_role_to_users_table` (+ помечает существующих `role='admin'`) и `verify_existing_staff_emails` (модераторам/админам ставит `email_verified_at`).
+- Авторизация — **кастом** (штатный web-guard + свои Blade-страницы `auth/login|register|verify-email`, `cabinet/index`), а не Breeze/Filament-панель. Вход по позывному ИЛИ email.
+- `User implements FilamentUser, MustVerifyEmail`: `canAccessPanel()` → только `moderator/admin`; подтверждение email через Resend (SMTP).
+- Загрузка активации — middleware `auth` + `verified`; `user_id` пишется в активацию (ActivationImporter).
+- Управление пользователями — Filament `UserResource` (роли, пароль, тумблер подтверждения, удаление; доступ только `admin`, нельзя удалить себя).
 
 Важно: у пользователя может быть несколько позывных за карьеру (смена категории, спецпозывные). На перспективу — таблица `user_callsigns (user_id, callsign, valid_from, valid_to)`; зачёт охотнику вести по объединению его позывных.
 
@@ -398,11 +405,14 @@ CREATE TABLE hunter_credits (
 ## 7. Дорожная карта реализации
 
 1. ✅ Docker-окружение, парсер ADIF, миграции `qsos`/`activation_proofs`, модели.
-2. 🔜 Регистрация/авторизация активаторов (Breeze или Filament-панель `user`), привязка `callsign`.
-3. 🔜 Форма загрузки лога (FormRequest §3.2 + ActivationImporter §3.3).
-4. 🔜 Экран модерации §4 в Filament + автопроверки.
-5. 🔜 Лайки активаций, затем комментарии (§2.2, `activation_likes`/`activation_comments`).
-6. 🔜 Страница «Как логировать» с инструкциями под популярные логгеры (§3.4).
-7. 🔜 Публичная статистика охотников (по `qsos`), страница «мои зачтённые парки».
-8. 🔜 Дипломы (`awards`), PDF-сертификаты.
-9. 🔜 Синк с СРР §5 (после договорённости с СРР о токенах для пользователей).
+2. ✅ Регистрация/авторизация активаторов — кастом (web-guard + свои Blade-страницы), привязка `callsign`, роли `user/moderator/admin`, подтверждение email (Resend), управление пользователями в Filament (`UserResource`).
+3. ✅ Форма загрузки лога (FormRequest §3.2 + ActivationImporter §3.3) — под `auth` + `verified`, `user_id` пишется.
+4. ✅ Экран модерации §4 в Filament (approve/reject + скачивание лога).
+5. ✅ Публичная витрина: карта, страница парка, страница всех парков `/parks`, публичная страница активации (галерея фото, журнал QSO, скачивание ADIF), топ активаторов, i18n RU/EN, карта-пикер координат в админке.
+6. 🔜 Лайки активаций, затем комментарии (§2.2, `activation_likes`/`activation_comments`) — теперь есть аккаунты, лайки по `user_id`.
+7. 🔜 N-fer: активация на границе нескольких парков засчитывается в каждый (two-fer/n-fer как в POTA).
+8. 🔜 Страница «Как логировать» с инструкциями под популярные логгеры (§3.4).
+9. 🔜 Публичная статистика охотников (по `qsos`), страница «мои зачтённые парки».
+10. 🔜 Профиль пользователя + сброс пароля; стилизованный email-шаблон под сайт.
+11. 🔜 Дипломы (`awards`), PDF-сертификаты.
+12. 🔜 Синк с СРР §5 (после договорённости с СРР о токенах для пользователей).
