@@ -50,9 +50,27 @@ DB_PASSWORD=...
 
 QUEUE_CONNECTION=sync           # на шареде воркер держать негде (см. ниже)
 SESSION_DRIVER=database
+SESSION_SECURE_COOKIE=true      # куки только по HTTPS
 CACHE_STORE=database
 LOG_LEVEL=warning
+
+# Почта — Resend по SMTP (нужна для подтверждения email активаторов)
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.resend.com
+MAIL_PORT=587
+MAIL_USERNAME=resend
+MAIL_PASSWORD=re_ВАШ_RESEND_API_KEY
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@ваш-домен      # домен подтверждён в Resend
+MAIL_FROM_NAME="Urban Parks"
 ```
+
+> **Почта / подтверждение email.** Регистрация активаторов требует подтверждения email —
+> без рабочей почты новый пользователь не сможет загружать активации (загрузка под middleware
+> `verified`). Локально сойдёт `MAIL_MAILER=log` (письма в `storage/logs`), для боевого —
+> Resend по SMTP как выше. `MAIL_FROM_ADDRESS` обязан быть на домене, верифицированном в Resend,
+> иначе письма не уйдут. Модераторы/админы помечаются подтверждёнными автоматически
+> (миграция `verify_existing_staff_emails`).
 
 ### 4. Инициализация
 
@@ -131,7 +149,9 @@ php artisan up
 - [ ] `.env` не доступен по HTTP (document root = `public/`)
 - [ ] Пароль БД не `secret`, root-доступ закрыт снаружи
 - [ ] HTTPS включён, HTTP редиректится
+- [ ] `SESSION_SECURE_COOKIE=true` (куки только по HTTPS)
+- [ ] Почта настроена (Resend), `MAIL_FROM_ADDRESS` на верифицированном домене — иначе подтверждение email не работает
 - [ ] `php artisan config:cache` выполнен (env-файл не читается на каждый запрос)
 - [ ] Сидеры с тестовыми активациями (`ActivationSeeder`) НЕ запущены на проде
-- [ ] Админ-пользователь создан с нормальным паролем
+- [ ] Админ-пользователь создан с нормальным паролем (или назначен через админку → Пользователи)
 - [ ] Бэкап БД настроен
