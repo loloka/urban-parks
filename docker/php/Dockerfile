@@ -34,4 +34,10 @@ RUN useradd -G www-data -u 1000 -d /home/appuser appuser \
 
 WORKDIR /var/www/html
 
+# Предсоздаём vendor с владельцем appuser: docker-том, монтируемый сюда,
+# унаследует эти права (иначе он создаётся от root и composer не может писать)
+RUN mkdir -p /var/www/html/vendor && chown -R appuser:appuser /var/www/html \
+    # и сразу гасим предупреждение git про "dubious ownership" смонтированного кода
+    && su appuser -c "git config --global --add safe.directory /var/www/html"
+
 USER appuser
