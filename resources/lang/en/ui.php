@@ -10,6 +10,7 @@ return [
         'diplomas' => 'Awards',
         'cabinet' => 'Cabinet',
         'login' => 'Log in',
+        'logout' => 'Log out',
     ],
 
     // Hero section

@@ -43,6 +43,11 @@
                         <a href="{{ route('cabinet') }}"
                             class="text-gray-700 hover:text-[--color-primary-600] transition font-semibold">👤
                             {{ __('ui.nav.cabinet') }}</a>
+                        <form method="POST" action="{{ route('logout') }}" class="inline">
+                            @csrf
+                            <button type="submit"
+                                class="text-gray-600 hover:text-red-600 transition font-semibold">{{ __('ui.nav.logout') }}</button>
+                        </form>
                     @else
                         <a href="{{ route('login') }}"
                             class="text-gray-700 hover:text-[--color-primary-600] transition font-semibold">{{ __('ui.nav.login') }}</a>

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -46,7 +46,15 @@ class AccountController extends Controller
         Auth::login($user, remember: true);
         $request->session()->regenerate();
 
-        return redirect()->route('cabinet')->with('success', 'Аккаунт создан. Добро пожаловать!');
+        // Письмо с подтверждением email (не роняем регистрацию, если почта не настроена)
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return redirect()->route('verification.notice')
+            ->with('success', 'Аккаунт создан. Мы отправили письмо для подтверждения email.');
     }
 
     // --- Вход ---
@@ -94,6 +102,39 @@ class AccountController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('home');
+    }
+
+    // --- Подтверждение email ---
+
+    public function verifyNotice()
+    {
+        return view('auth.verify-email');
+    }
+
+    public function verify(EmailVerificationRequest $request)
+    {
+        if (! $request->user()->hasVerifiedEmail()) {
+            $request->fulfill(); // помечает email подтверждённым + событие Verified
+        }
+
+        return redirect()->route('cabinet')->with('success', 'Email подтверждён — спасибо!');
+    }
+
+    public function resendVerification(Request $request)
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->route('cabinet');
+        }
+
+        try {
+            $request->user()->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['email' => 'Не удалось отправить письмо. Проверьте настройки почты или попробуйте позже.']);
+        }
+
+        return back()->with('success', 'Письмо отправлено повторно.');
     }
 
     // --- Личный кабинет ---

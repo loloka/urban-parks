@@ -10,6 +10,7 @@ return [
         'diplomas' => 'Дипломы',
         'cabinet' => 'Кабинет',
         'login' => 'Войти',
+        'logout' => 'Выйти',
     ],
 
     // Hero секция

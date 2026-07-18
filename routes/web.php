@@ -16,8 +16,8 @@ Route::get('/parks', [ParkController::class, 'list'])->name('parks.index');
 // Страница парка
 Route::get('/park/{park}', [ParkController::class, 'show'])->name('park.show');
 
-// Активации: загрузка ADIF-лога + пруфов — только для авторизованных активаторов
-Route::middleware('auth')->group(function () {
+// Активации: загрузка ADIF-лога + пруфов — только авторизованным с подтверждённым email
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/activations/add', [ActivationController::class, 'create'])
         ->name('activations.create');
 
@@ -57,6 +57,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AccountController::class, 'logout'])->name('logout');
     Route::get('/cabinet', [AccountController::class, 'cabinet'])->name('cabinet');
+
+    // Подтверждение email
+    Route::get('/email/verify', [AccountController::class, 'verifyNotice'])
+        ->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', [AccountController::class, 'verify'])
+        ->middleware('signed')
+        ->name('verification.verify');
+    Route::post('/email/verification-notification', [AccountController::class, 'resendVerification'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
 });
 
 // API endpoints

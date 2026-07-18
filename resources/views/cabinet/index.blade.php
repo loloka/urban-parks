@@ -60,6 +60,14 @@
             </div>
         @endif
 
+        @unless (auth()->user()->hasVerifiedEmail())
+            <div class="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded-lg mb-6 flex flex-wrap items-center justify-between gap-3">
+                <span>📬 Подтвердите email, чтобы загружать активации.</span>
+                <a href="{{ route('verification.notice') }}"
+                    class="font-semibold underline hover:no-underline">Подтвердить →</a>
+            </div>
+        @endunless
+
         @forelse ($activations as $activation)
             <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border-l-4
                 @if ($activation->status === 'approved') border-green-500

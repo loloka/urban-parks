@@ -75,7 +75,7 @@
                             class="w-full border-gray-300 rounded-lg focus:ring-[--color-primary-600] focus:border-[--color-primary-600]">
                     </div>
                     <button type="submit"
-                        class="w-full bg-[--color-primary-600] hover:bg-[--color-primary-700] text-white font-bold py-3 rounded-lg transition">
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">
                         Зарегистрироваться
                     </button>
                 </form>
