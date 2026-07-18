@@ -23,7 +23,7 @@ return [
             'cities' => 'Cities',
             'regions' => 'Regions',
         ],
-        'featured_city' => 'Program capital: :city · :count parks',
+        'featured_city' => 'Program capital: Novosibirsk',
         'latest_activation' => 'Latest activation:',
     ],
 
@@ -53,7 +53,7 @@ return [
 
     // Parks
     'parks' => [
-        'title' => 'Recently added parks',
+        'title' => 'Recently activated parks',
         'latest_activator' => 'Latest:',
         'not_activated' => 'Not activated yet',
         'activations_count' => 'Activations',

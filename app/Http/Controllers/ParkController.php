@@ -20,14 +20,6 @@ class ParkController extends Controller
             'regions' => Park::distinct('region')->count('region'),
         ];
 
-        // «Столица программы» — город с наибольшим числом активных парков (динамически)
-        $featuredCity = Park::active()
-            ->select('city')
-            ->selectRaw('COUNT(*) as parks_count')
-            ->groupBy('city')
-            ->orderByDesc('parks_count')
-            ->first();
-
         // Последняя активация
         $latestActivation = Activation::with('park')
             ->where('status', 'approved')
@@ -46,7 +38,7 @@ class ParkController extends Controller
             ->limit(10)
             ->get();
 
-        return view('welcome', compact('stats', 'latestActivation', 'topActivators', 'featuredCity'));
+        return view('welcome', compact('stats', 'latestActivation', 'topActivators'));
     }
 
     /**

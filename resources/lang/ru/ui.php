@@ -23,7 +23,7 @@ return [
             'cities' => 'Городов',
             'regions' => 'Регионов',
         ],
-        'featured_city' => 'Столица программы: :city · парков: :count',
+        'featured_city' => 'Столица программы: Новосибирск',
         'latest_activation' => 'Последняя активация:',
     ],
 
@@ -53,7 +53,7 @@ return [
 
     // Парки
     'parks' => [
-        'title' => 'Последние добавленные парки',
+        'title' => 'Последние активированные парки',
         'latest_activator' => 'Последний:',
         'not_activated' => 'Ещё не активирован',
         'activations_count' => 'Активаций',

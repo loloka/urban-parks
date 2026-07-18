@@ -104,11 +104,9 @@
             </div>
 
             <div class="mt-8 flex flex-col md:flex-row items-center justify-center gap-4">
-                @if ($featuredCity)
-                    <div class="inline-block bg-yellow-400 text-gray-900 px-6 py-3 rounded-full font-bold">
-                        🏆 {{ __('ui.hero.featured_city', ['city' => $featuredCity->city, 'count' => $featuredCity->parks_count]) }}
-                    </div>
-                @endif
+                <div class="inline-block bg-yellow-400 text-gray-900 px-6 py-3 rounded-full font-bold">
+                    🏆 {{ __('ui.hero.featured_city') }}
+                </div>
 
                 @if ($latestActivation)
                     <div
@@ -550,9 +548,12 @@
 
                 filteredParks = sortedParks;
                 updateMap(sortedParks);
-                // «Последние добавленные» — самые новые парки (по возрастанию id → новые выше)
-                const recentlyAdded = [...parks].sort((a, b) => b.id - a.id).slice(0, 6);
-                renderParksList(recentlyAdded);
+                // «Последние активированные» — парки с активациями, по свежести последней активации
+                const recentlyActivated = [...parks]
+                    .filter(p => p.latest_activation)
+                    .sort((a, b) => new Date(b.latest_activation.date) - new Date(a.latest_activation.date))
+                    .slice(0, 6);
+                renderParksList(recentlyActivated);
             })
             .catch(error => {
                 console.error('Error loading parks:', error);
