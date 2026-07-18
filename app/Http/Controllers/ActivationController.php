@@ -2,52 +2,50 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreActivationRequest;
 use App\Models\Park;
-use App\Models\Activation;
-use Illuminate\Http\Request;
+use App\Services\ActivationImporter;
+use App\Services\Adif\AdifParseException;
 
 class ActivationController extends Controller
 {
     /**
-     * Показать форму добавления активации
+     * Форма загрузки лога активации
      */
     public function create()
     {
-        $parks = Park::orderBy('reference')->get();
+        $parks = Park::active()->orderBy('reference')->get();
+
         return view('activations.create', compact('parks'));
     }
 
     /**
-     * Сохранить активацию
+     * Принять ADIF-лог + пруфы, отправить на модерацию
      */
-    public function store(Request $request)
+    public function store(StoreActivationRequest $request, ActivationImporter $importer)
     {
-        $validated = $request->validate([
-            'park_id' => 'required|exists:parks,id',
-            'callsign' => 'required|string|max:20|regex:/^[A-Z0-9\/]+$/i',
-            'activation_date' => 'required|date|before_or_equal:today',
-            'qso_count' => 'required|integer|min:1|max:9999',
-            'notes' => 'nullable|string|max:1000',
-        ], [
-            'park_id.required' => 'Выберите парк',
-            'park_id.exists' => 'Выбранный парк не найден',
-            'callsign.required' => 'Введите позывной',
-            'callsign.regex' => 'Позывной должен содержать только A-Z, 0-9 и /',
-            'activation_date.required' => 'Укажите дату активации',
-            'activation_date.before_or_equal' => 'Дата не может быть в будущем',
-            'qso_count.required' => 'Укажите количество QSO',
-            'qso_count.min' => 'Минимум 1 QSO',
-        ]);
+        try {
+            $result = $importer->import(
+                $request->validated(),
+                $request->file('adif'),
+                $request->file('screenshot'),
+                $request->file('photos', [])
+            );
+        } catch (AdifParseException $e) {
+            return back()->withInput()->withErrors(['adif' => $e->getMessage()]);
+        }
 
-        // Преобразуем позывной в верхний регистр
-        $validated['callsign'] = strtoupper($validated['callsign']);
+        $message = "✅ Лог принят: {$result['imported']} QSO из парка "
+            . $result['activation']->park->reference
+            . '. Активация отправлена на модерацию!';
 
-        // Статус по умолчанию - на модерации
-        $validated['status'] = 'pending';
+        if ($result['skipped'] > 0) {
+            $message .= " ({$result['skipped']} записей пропущено)";
+        }
 
-        Activation::create($validated);
-
-        return redirect()->route('activations.create')
-            ->with('success', '✅ Активация отправлена на модерацию! Спасибо, ' . $validated['callsign'] . '!');
+        return redirect()
+            ->route('activations.create')
+            ->with('success', $message)
+            ->with('warnings', $result['warnings']);
     }
 }

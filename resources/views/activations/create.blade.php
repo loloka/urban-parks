@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Добавить активацию - Urban Parks</title>
+    <title>Загрузить активацию - Urban Parks</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
@@ -13,9 +13,9 @@
         <!-- Хедер -->
         <div class="mb-8">
             <a href="/" class="text-blue-600 hover:underline">← На главную</a>
-            <h1 class="text-4xl font-bold mt-4">📡 Добавить активацию</h1>
+            <h1 class="text-4xl font-bold mt-4">📡 Загрузить активацию</h1>
             <p class="text-gray-600 mt-2">
-                Заполните форму ниже. Активация будет проверена модератором.
+                Прикрепите ADIF-лог и скриншот из QTHnow. Активация будет проверена модератором.
             </p>
         </div>
 
@@ -26,8 +26,21 @@
             </div>
         @endif
 
+        <!-- Предупреждения импорта -->
+        @if (session('warnings') && count(session('warnings')) > 0)
+            <div class="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded mb-6 text-sm">
+                <p class="font-semibold mb-1">⚠ Обратите внимание:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach (session('warnings') as $warning)
+                        <li>{{ $warning }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- Форма -->
-        <form method="POST" action="{{ route('activations.store') }}" class="bg-white rounded-lg shadow p-6 space-y-6">
+        <form method="POST" action="{{ route('activations.store') }}" enctype="multipart/form-data"
+            class="bg-white rounded-lg shadow p-6 space-y-6">
             @csrf
 
             <!-- Парк -->
@@ -38,10 +51,13 @@
                     <option value="">Выберите парк</option>
                     @foreach ($parks as $park)
                         <option value="{{ $park->id }}" {{ old('park_id') == $park->id ? 'selected' : '' }}>
-                            {{ $park->code }} - {{ $park->name }} ({{ $park->city }})
+                            {{ $park->reference }} — {{ $park->name }} ({{ $park->city }})
                         </option>
                     @endforeach
                 </select>
+                <p class="text-xs text-gray-500 mt-1">
+                    Парк выбирается здесь — спец-теги (MY_SIG) в логе не обязательны
+                </p>
                 @error('park_id')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                 @enderror
@@ -57,23 +73,44 @@
                 @enderror
             </div>
 
-            <!-- Дата -->
+            <!-- ADIF-лог -->
             <div>
-                <label class="block font-semibold mb-2">Дата активации *</label>
-                <input type="date" name="activation_date" value="{{ old('activation_date', date('Y-m-d')) }}"
-                    max="{{ date('Y-m-d') }}" required
-                    class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                @error('activation_date')
+                <label class="block font-semibold mb-2">ADIF-лог (.adi) *</label>
+                <input type="file" name="adif" accept=".adi,.adif,.txt" required
+                    class="w-full border border-gray-300 rounded-lg p-2 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-semibold hover:file:bg-blue-100">
+                <p class="text-xs text-gray-500 mt-1">
+                    Экспорт из любого логгера: RUMlogNG, UR5EQF, Log4OM, HAMRS... Дата и число QSO возьмутся из лога.
+                </p>
+                @error('adif')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                 @enderror
             </div>
 
-            <!-- Количество QSO -->
+            <!-- Скриншот QTHnow -->
             <div>
-                <label class="block font-semibold mb-2">Количество QSO *</label>
-                <input type="number" name="qso_count" value="{{ old('qso_count') }}" min="1" max="9999"
-                    required class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                @error('qso_count')
+                <label class="block font-semibold mb-2">Скриншот QTHnow *</label>
+                <input type="file" name="screenshot" accept="image/jpeg,image/png,image/webp" required
+                    class="w-full border border-gray-300 rounded-lg p-2 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-semibold hover:file:bg-blue-100">
+                <p class="text-xs text-gray-500 mt-1">
+                    Обязательный пруф присутствия: скриншот с вашим позывным и координатами из парка
+                </p>
+                @error('screenshot')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Фото (опционально) -->
+            <div>
+                <label class="block font-semibold mb-2">Фото с активации (по желанию)</label>
+                <input type="file" name="photos[]" accept="image/jpeg,image/png,image/webp" multiple
+                    class="w-full border border-gray-300 rounded-lg p-2 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-gray-100 file:text-gray-700 file:font-semibold hover:file:bg-gray-200">
+                <p class="text-xs text-gray-500 mt-1">
+                    До 5 фото: аппаратура, антенна, виды парка — станут историей активации
+                </p>
+                @error('photos')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+                @error('photos.*')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                 @enderror
             </div>
@@ -81,7 +118,7 @@
             <!-- Заметки -->
             <div>
                 <label class="block font-semibold mb-2">Заметки (опционально)</label>
-                <textarea name="notes" rows="4" placeholder="Диапазоны, особенности активации..."
+                <textarea name="notes" rows="3" placeholder="Условия, антенна, особенности активации..."
                     class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ old('notes') }}</textarea>
                 @error('notes')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -101,8 +138,9 @@
             <ul class="text-sm text-gray-700 space-y-1">
                 <li>• Минимум 10 QSO для зачёта активации</li>
                 <li>• Работа должна вестись с территории парка</li>
+                <li>• Скриншот QTHnow с позывным и координатами обязателен</li>
                 <li>• Запрещены ретрансляторы</li>
-                <li>• Одна активация парка в день</li>
+                <li>• Одна активация парка в день (один лог = один день)</li>
             </ul>
         </div>
     </div>

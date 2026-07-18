@@ -7,10 +7,8 @@
     <title>Urban Parks - {{ __('ui.hero.subtitle') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <!-- MapLibre GL JS -->
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" />
 </head>
 
 <body class="bg-gray-50">
@@ -353,9 +351,8 @@
         </div>
     </footer>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- MapLibre GL JS -->
+    <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
 
     <script>
         // Передаём переводы в JS
@@ -368,35 +365,155 @@
             area: "{{ __('ui.park.area') }}",
         };
 
-        // Инициализация карты
-        const map = L.map('map', {
-            attributionControl: false
-        }).setView([55.751244, 82.914517], 5);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18,
-        }).addTo(map);
-
-        L.control.attribution({
-            position: 'bottomright',
-            prefix: false
-        }).addAttribution('© OpenStreetMap').addTo(map);
-
-        const markers = L.markerClusterGroup({
-            chunkedLoading: true,
-            spiderfyOnMaxZoom: true,
-            showCoverageOnHover: false,
-            zoomToBoundsOnClick: true
-        });
-
         let allParks = [];
         let filteredParks = [];
         const currentLocale = "{{ app()->getLocale() }}";
 
-        const customIcon = L.divIcon({
-            className: 'custom-marker',
-            iconSize: [30, 30],
-            html: '<div style="background:#2563eb;border:3px solid white;border-radius:50%;width:30px;height:30px;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>'
+        // Инициализация карты (MapLibre GL + векторные тайлы OpenFreeMap).
+        // cooperativeGestures: колесо мыши скроллит страницу, зум — Ctrl+колесо,
+        // на телефоне карта двигается двумя пальцами — страница не «залипает».
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://tiles.openfreemap.org/styles/liberty',
+            center: [82.914517, 55.751244],
+            zoom: 4,
+            cooperativeGestures: true,
+            attributionControl: {
+                compact: true
+            },
+            locale: currentLocale === 'ru' ? {
+                'CooperativeGesturesHandler.WindowsHelpText': 'Зум карты: Ctrl + колесо мыши',
+                'CooperativeGesturesHandler.MacHelpText': 'Зум карты: ⌘ + колесо мыши',
+                'CooperativeGesturesHandler.MobileHelpText': 'Двигайте карту двумя пальцами',
+            } : {},
+        });
+
+        map.addControl(new maplibregl.NavigationControl({
+            showCompass: false
+        }), 'top-right');
+        map.addControl(new maplibregl.FullscreenControl(), 'top-right');
+
+        let mapReady = false;
+        let pendingParks = null;
+
+        const parksToGeoJSON = (parks) => ({
+            type: 'FeatureCollection',
+            features: parks.map(park => ({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [Number(park.longitude), Number(park.latitude)]
+                },
+                properties: {
+                    id: park.id,
+                    name: (currentLocale === 'en' && park.name_en) ? park.name_en : park.name,
+                    reference: park.reference,
+                    city: park.city,
+                    region: park.region,
+                    area: park.area || '',
+                    activation_count: park.activation_count || 0,
+                },
+            })),
+        });
+
+        map.on('load', () => {
+            map.addSource('parks', {
+                type: 'geojson',
+                data: parksToGeoJSON([]),
+                cluster: true,
+                clusterMaxZoom: 12,
+                clusterRadius: 50,
+            });
+
+            // Кластеры
+            map.addLayer({
+                id: 'clusters',
+                type: 'circle',
+                source: 'parks',
+                filter: ['has', 'point_count'],
+                paint: {
+                    'circle-color': '#2563eb',
+                    'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 30, 30],
+                    'circle-stroke-width': 3,
+                    'circle-stroke-color': '#ffffff',
+                },
+            });
+
+            map.addLayer({
+                id: 'cluster-count',
+                type: 'symbol',
+                source: 'parks',
+                filter: ['has', 'point_count'],
+                layout: {
+                    'text-field': ['get', 'point_count_abbreviated'],
+                    'text-font': ['Noto Sans Regular'],
+                    'text-size': 13,
+                },
+                paint: {
+                    'text-color': '#ffffff'
+                },
+            });
+
+            // Одиночные парки
+            map.addLayer({
+                id: 'park-points',
+                type: 'circle',
+                source: 'parks',
+                filter: ['!', ['has', 'point_count']],
+                paint: {
+                    'circle-color': '#2563eb',
+                    'circle-radius': 9,
+                    'circle-stroke-width': 3,
+                    'circle-stroke-color': '#ffffff',
+                },
+            });
+
+            // Клик по кластеру — приблизить
+            map.on('click', 'clusters', async (e) => {
+                const features = map.queryRenderedFeatures(e.point, {
+                    layers: ['clusters']
+                });
+                const zoom = await map.getSource('parks').getClusterExpansionZoom(
+                    features[0].properties.cluster_id
+                );
+                map.easeTo({
+                    center: features[0].geometry.coordinates,
+                    zoom: zoom + 0.5
+                });
+            });
+
+            // Клик по парку — попап
+            map.on('click', 'park-points', (e) => {
+                const p = e.features[0].properties;
+
+                new maplibregl.Popup({
+                        offset: 12,
+                        maxWidth: '280px'
+                    })
+                    .setLngLat(e.features[0].geometry.coordinates)
+                    .setHTML(`
+                        <div class="p-2 min-w-[200px]">
+                            <h4 class="font-bold text-lg mb-1">${p.name}</h4>
+                            <p class="text-sm text-gray-600 font-mono mb-1">${p.reference}</p>
+                            <p class="text-sm mb-1">📍 ${p.city}, ${p.region}</p>
+                            ${p.area ? `<p class="text-xs text-gray-500">${translations.area}: ${p.area}</p>` : ''}
+                            <p class="text-xs text-gray-500 mt-2">⚡ ${translations.activationsCount}: ${p.activation_count}</p>
+                            <a href="/park/${p.id}" class="text-blue-600 text-sm hover:underline mt-2 inline-block">${translations.moreDetails} →</a>
+                        </div>
+                    `)
+                    .addTo(map);
+            });
+
+            ['clusters', 'park-points'].forEach(layer => {
+                map.on('mouseenter', layer, () => map.getCanvas().style.cursor = 'pointer');
+                map.on('mouseleave', layer, () => map.getCanvas().style.cursor = '');
+            });
+
+            mapReady = true;
+            if (pendingParks) {
+                updateMap(pendingParks);
+                pendingParks = null;
+            }
         });
 
         // Загружаем парки
@@ -453,31 +570,14 @@
 
         // Обновление карты
         function updateMap(parks) {
-            markers.clearLayers();
-
-            parks.forEach(park => {
-                const parkName = currentLocale === 'en' && park.name_en ? park.name_en : park.name;
-                const parkDescription = currentLocale === 'en' && park.description_en ? park.description_en : park
-                    .description;
-
-                const marker = L.marker([park.latitude, park.longitude], {
-                        icon: customIcon
-                    })
-                    .bindPopup(`
-                        <div class="p-2 min-w-[200px]">
-                            <h4 class="font-bold text-lg mb-1">${parkName}</h4>
-                            <p class="text-sm text-gray-600 font-mono mb-1">${park.reference}</p>
-                            <p class="text-sm mb-1">📍 ${park.city}, ${park.region}</p>
-                            ${park.area ? `<p class="text-xs text-gray-500">${translations.area}: ${park.area}</p>` : ''}
-                            <p class="text-xs text-gray-500 mt-2">⚡ ${translations.activationsCount}: ${park.activation_count}</p>
-                            <a href="/park/${park.id}" class="text-blue-600 text-sm hover:underline mt-2 inline-block">${translations.moreDetails} →</a>
-                        </div>
-                    `);
-                markers.addLayer(marker);
-            });
-
-            map.addLayer(markers);
             document.getElementById('visible-parks-count').textContent = parks.length;
+
+            if (!mapReady) {
+                pendingParks = parks; // карта ещё грузится — отдадим данные в on('load')
+                return;
+            }
+
+            map.getSource('parks').setData(parksToGeoJSON(parks));
         }
 
         // Рендер списка парков

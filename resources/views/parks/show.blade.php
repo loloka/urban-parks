@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $park->getLocalizedName(app()->getLocale()) }} - Urban Parks</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" />
 </head>
 
 <body class="bg-gray-50">
@@ -290,31 +290,46 @@
         </div>
     </footer>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
     <script>
-        const parkMap = L.map('park-map', {
-            attributionControl: false
-        }).setView([{{ $park->latitude }}, {{ $park->longitude }}], 14);
+        const parkMap = new maplibregl.Map({
+            container: 'park-map',
+            style: 'https://tiles.openfreemap.org/styles/liberty',
+            center: [{{ $park->longitude }}, {{ $park->latitude }}],
+            zoom: 13,
+            cooperativeGestures: true,
+            attributionControl: {
+                compact: true
+            },
+            @if (app()->getLocale() === 'ru')
+            locale: {
+                'CooperativeGesturesHandler.WindowsHelpText': 'Зум карты: Ctrl + колесо мыши',
+                'CooperativeGesturesHandler.MacHelpText': 'Зум карты: ⌘ + колесо мыши',
+                'CooperativeGesturesHandler.MobileHelpText': 'Двигайте карту двумя пальцами',
+            },
+            @endif
+        });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18,
-        }).addTo(parkMap);
+        parkMap.addControl(new maplibregl.NavigationControl({
+            showCompass: false
+        }), 'top-right');
 
-        L.control.attribution({
-            position: 'bottomright',
-            prefix: false
-        }).addAttribution('© OpenStreetMap').addTo(parkMap);
-
-        const marker = L.marker([{{ $park->latitude }}, {{ $park->longitude }}])
-            .bindPopup(`
-                <div class="p-2">
-                    <h4 class="font-bold text-lg">{{ $park->getLocalizedName(app()->getLocale()) }}</h4>
-                    <p class="text-sm font-mono">{{ $park->reference }}</p>
-                </div>
-            `)
-            .addTo(parkMap);
-
-        marker.openPopup();
+        new maplibregl.Marker({
+                color: '#2563eb'
+            })
+            .setLngLat([{{ $park->longitude }}, {{ $park->latitude }}])
+            .setPopup(
+                new maplibregl.Popup({
+                    offset: 24
+                }).setHTML(`
+                    <div class="p-2">
+                        <h4 class="font-bold text-lg">{{ $park->getLocalizedName(app()->getLocale()) }}</h4>
+                        <p class="text-sm font-mono">{{ $park->reference }}</p>
+                    </div>
+                `)
+            )
+            .addTo(parkMap)
+            .togglePopup();
     </script>
 
 </body>

@@ -4,13 +4,17 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ActivationResource\Pages;
 use App\Models\Activation;
+use App\Models\ActivationProof;
 use App\Models\Park;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists\Components as Info;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Support\HtmlString;
 
 class ActivationResource extends Resource
 {
@@ -20,6 +24,133 @@ class ActivationResource extends Resource
     protected static ?string $modelLabel = 'активация';
     protected static ?string $pluralModelLabel = 'Активации';
     protected static ?int $navigationSort = 2;
+
+    /**
+     * Экран модерации: всё для решения за 10 секунд —
+     * кто → где → пруфы → сводка лога → кнопки (в header ViewActivation)
+     */
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist->schema([
+            Info\Section::make()
+                ->schema([
+                    Info\TextEntry::make('callsign')
+                        ->label('Позывной')
+                        ->weight('bold')
+                        ->size('lg')
+                        ->url(fn (Activation $r) => "https://www.qrz.com/db/{$r->callsign}", shouldOpenInNewTab: true),
+                    Info\TextEntry::make('park.reference')
+                        ->label('Парк')
+                        ->badge()
+                        ->color('primary'),
+                    Info\TextEntry::make('park.name')
+                        ->label(''),
+                    Info\TextEntry::make('activation_date')
+                        ->label('Дата')
+                        ->date('d.m.Y'),
+                    Info\TextEntry::make('status')
+                        ->label('Статус')
+                        ->badge()
+                        ->color(fn (string $state) => match ($state) {
+                            'pending' => 'warning',
+                            'approved' => 'success',
+                            'rejected' => 'danger',
+                            default => 'gray',
+                        })
+                        ->formatStateUsing(fn (string $state) => match ($state) {
+                            'pending' => 'На модерации',
+                            'approved' => 'Одобрено',
+                            'rejected' => 'Отклонено',
+                            default => $state,
+                        }),
+                    Info\TextEntry::make('source')
+                        ->label('Источник')
+                        ->badge()
+                        ->color(fn (string $state) => $state === 'adif' ? 'success' : 'gray')
+                        ->formatStateUsing(fn (string $state) => $state === 'adif' ? 'ADIF-лог' : 'Ручной ввод'),
+                ])
+                ->columns(3),
+
+            Info\Section::make('Пруфы')
+                ->description('Скриншот QTHnow обязателен; фото — галерея активации')
+                ->schema([
+                    Info\TextEntry::make('proofs')
+                        ->label('')
+                        ->getStateUsing(function (Activation $record) {
+                            if ($record->proofs->isEmpty()) {
+                                return new HtmlString('<em>Пруфы не прикреплены (активация добавлена вручную)</em>');
+                            }
+
+                            $html = '<div style="display:flex;flex-wrap:wrap;gap:12px;">';
+                            foreach ($record->proofs as $proof) {
+                                $url = route('proofs.show', $proof);
+                                $label = match ($proof->type) {
+                                    ActivationProof::TYPE_SCREENSHOT => '📱 QTHnow',
+                                    ActivationProof::TYPE_GPX => '🗺 GPX-трек',
+                                    default => '📷 Фото',
+                                };
+                                if ($proof->type === ActivationProof::TYPE_GPX) {
+                                    $html .= "<a href=\"{$url}\" target=\"_blank\" style=\"display:block;padding:12px;border:1px solid #e5e7eb;border-radius:8px;\">{$label}</a>";
+                                } else {
+                                    $html .= "<a href=\"{$url}\" target=\"_blank\" style=\"display:block;\">"
+                                        . "<img src=\"{$url}\" style=\"height:180px;border-radius:8px;object-fit:cover;\" loading=\"lazy\" />"
+                                        . "<div style=\"font-size:12px;color:#6b7280;margin-top:4px;text-align:center;\">{$label}</div>"
+                                        . '</a>';
+                                }
+                            }
+
+                            return new HtmlString($html . '</div>');
+                        }),
+                ])
+                ->visible(fn (Activation $r) => $r->source === Activation::SOURCE_ADIF || $r->proofs->isNotEmpty()),
+
+            Info\Section::make('Лог')
+                ->schema([
+                    Info\TextEntry::make('qso_count')
+                        ->label('Всего QSO')
+                        ->badge()
+                        ->color('success'),
+                    Info\TextEntry::make('bands_summary')
+                        ->label('Диапазоны')
+                        ->getStateUsing(fn (Activation $r) => self::groupSummary($r, 'band')),
+                    Info\TextEntry::make('modes_summary')
+                        ->label('Моды')
+                        ->getStateUsing(fn (Activation $r) => self::groupSummary($r, 'mode')),
+                    Info\TextEntry::make('time_span')
+                        ->label('Время работы (UTC)')
+                        ->getStateUsing(function (Activation $r) {
+                            $first = $r->qsos()->min('time_on');
+                            $last = $r->qsos()->max('time_on');
+
+                            return $first ? substr($first, 0, 5) . ' — ' . substr($last, 0, 5) : '—';
+                        }),
+                ])
+                ->columns(4)
+                ->visible(fn (Activation $r) => $r->source === Activation::SOURCE_ADIF),
+
+            Info\Section::make('Заметки')
+                ->schema([
+                    Info\TextEntry::make('notes')->label('Заметки активатора')->placeholder('—'),
+                    Info\TextEntry::make('moderator_note')->label('Комментарий модератора')->placeholder('—'),
+                ])
+                ->columns(2)
+                ->collapsed(),
+        ]);
+    }
+
+    /** Сводка вида "40M ×32 · 20M ×15" по колонке qsos */
+    private static function groupSummary(Activation $record, string $column): string
+    {
+        $groups = $record->qsos()
+            ->selectRaw("{$column}, COUNT(*) as cnt")
+            ->groupBy($column)
+            ->orderByDesc('cnt')
+            ->pluck('cnt', $column);
+
+        return $groups->isEmpty()
+            ? '—'
+            : $groups->map(fn ($cnt, $key) => "{$key} ×{$cnt}")->implode(' · ');
+    }
 
     public static function form(Form $form): Form
     {
@@ -141,6 +272,12 @@ class ActivationResource extends Resource
                     ->badge()
                     ->color('success'),
 
+                Tables\Columns\TextColumn::make('source')
+                    ->label('Источник')
+                    ->badge()
+                    ->formatStateUsing(fn($state) => $state === 'adif' ? 'ADIF' : 'вручную')
+                    ->color(fn($state) => $state === 'adif' ? 'success' : 'gray'),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Добавлено')
                     ->dateTime('d.m.Y H:i')
@@ -176,6 +313,9 @@ class ActivationResource extends Resource
                     }),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->label('👁 Проверить'),
+
                 Tables\Actions\Action::make('approve')
                     ->label('✅ Одобрить')
                     ->icon('heroicon-o-check-circle')
@@ -231,6 +371,7 @@ class ActivationResource extends Resource
         return [
             'index' => Pages\ListActivations::route('/'),
             'create' => Pages\CreateActivation::route('/create'),
+            'view' => Pages\ViewActivation::route('/{record}'),
             'edit' => Pages\EditActivation::route('/{record}/edit'),
         ];
     }
