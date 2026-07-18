@@ -66,7 +66,9 @@ class AdifParserTest extends TestCase
     public function test_last_record_without_eor_is_parsed(): void
     {
         $result = $this->parser->parse($this->fixture());
-        $last = end($result->records);
+        // end() требует ссылку — с readonly-свойством напрямую нельзя
+        $records = $result->records;
+        $last = end($records);
 
         $this->assertSame('UA9OTW/P', $last->call);
     }
