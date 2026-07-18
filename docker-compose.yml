@@ -11,6 +11,8 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./:/var/www/html
+      # vendor в docker-томе: на Windows-биндах PHP тормозит в разы
+      - vendor:/var/www/html/vendor
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-urban-parks.ini:ro
     environment:
       PHP_IDE_CONFIG: serverName=urban-parks
@@ -70,6 +72,7 @@ services:
     command: php artisan queue:work --tries=3 --timeout=120
     volumes:
       - ./:/var/www/html
+      - vendor:/var/www/html/vendor
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-urban-parks.ini:ro
     depends_on:
       mysql:
@@ -82,11 +85,12 @@ services:
     image: node:22-alpine
     container_name: up-node
     working_dir: /var/www/html
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
     ports:
       - "${VITE_PORT:-5173}:5173"
     volumes:
       - ./:/var/www/html
+      - node-modules:/var/www/html/node_modules
     networks:
       - urban-parks
 
@@ -96,4 +100,8 @@ networks:
 
 volumes:
   mysql-data:
+    driver: local
+  vendor:
+    driver: local
+  node-modules:
     driver: local
