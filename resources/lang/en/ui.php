@@ -96,10 +96,16 @@ return [
     // Footer
     'footer' => [
         'about' => 'About',
-        'rules' => 'Rules',
+        'rules' => 'Program Terms',
         'api' => 'API',
         'contacts' => 'Contacts',
         'copyright' => 'Made with ❤️ by hams for hams',
+    ],
+
+    'rules_page' => [
+        'title' => 'Program Terms',
+        'coming_soon' => 'The diploma program regulations are being prepared and will be published here soon.',
+        'back_to_home' => 'Back to home',
     ],
 
     // Common
@@ -122,7 +128,7 @@ return [
     'description' => 'Description',
     'actions' => 'Actions',
     'statistics' => 'Statistics',
-    'activation_rules' => 'Activation Rules',
+    'activation_rules' => 'Quick Activation Requirements',
     'latitude' => 'Latitude',
     'longitude' => 'Longitude',
     'active' => 'Active',

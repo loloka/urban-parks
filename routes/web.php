@@ -13,6 +13,9 @@ Route::get('/', [ParkController::class, 'index'])->name('home');
 // Список всех парков
 Route::get('/parks', [ParkController::class, 'list'])->name('parks.index');
 
+// Правила программы
+Route::view('/rules', 'rules')->name('rules');
+
 // Страница парка
 Route::get('/park/{park}', [ParkController::class, 'show'])->name('park.show');
 

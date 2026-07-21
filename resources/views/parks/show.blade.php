@@ -289,7 +289,7 @@
                                 class="text-gray-400 hover:text-white transition">{{ __('ui.home') }}</a></li>
                         <li><a href="#"
                                 class="text-gray-400 hover:text-white transition">{{ __('ui.footer.about') }}</a></li>
-                        <li><a href="#"
+                        <li><a href="{{ route('rules') }}"
                                 class="text-gray-400 hover:text-white transition">{{ __('ui.footer.rules') }}</a></li>
                         <li><a href="#"
                                 class="text-gray-400 hover:text-white transition">{{ __('ui.nav.diplomas') }}</a></li>
